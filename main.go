@@ -9,6 +9,8 @@ import (
     "strings"
     "github.com/pborman/getopt/v2"
     "github.com/spf13/viper"
+
+    "github.com/RileyR387/sc-dtc-client/dtc"
 )
 
 var (
@@ -43,8 +45,8 @@ func init() {
     }
     */
     viper.SetDefault("dtc.Host", "127.0.0.1")
-    viper.SetDefault("dtc.Port", "11099")
-    viper.SetDefault("dtc.HistPort", "11098")
+    viper.SetDefault("dtc.Port", 11099)
+    viper.SetDefault("dtc.HistPort", 11098)
     viper.SetDefault("dtc.Username", "")
     viper.SetDefault("dtc.Password", "")
 }
@@ -83,7 +85,15 @@ func main() {
             log.Fatalf("Failed to parse config: %v\n", err)
         }
     }
-    fmt.Printf(`%s@%s:%d`, viper.GetString("dtc.Username"), viper.GetString("dtc.Host"), viper.GetInt("dtc.Port") )
+    args := dtc.ConnectArgs {
+        viper.GetString("dtc.Host"),
+        viper.GetInt("dtc.Port"),
+        viper.GetInt("dtc.HistPort"),
+        viper.GetString("dtc.Username"),
+        viper.GetString("dtc.Password"),
+    }
+
+    dtc.Connect(args)
 }
 
 func configWrite(){
@@ -95,7 +105,7 @@ Alternatively, set the following environment variables:
 
 export ` + envPrefix + `_HOST='127.0.0.1'
 export ` + envPrefix + `_PORT='11099'
-export ` + envPrefix + `_HIST_PORT='11098'
+export ` + envPrefix + `_HISTPORT='11098'
 export ` + envPrefix + `_USERNAME=''
 export ` + envPrefix + `_PASSWORD=''
 `)
