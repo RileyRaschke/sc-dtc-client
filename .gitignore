@@ -1,0 +1,5 @@
+sc-dtc-client.yaml
+etc/*
+sc-dtc-client
+*.swp
+credentials.env
