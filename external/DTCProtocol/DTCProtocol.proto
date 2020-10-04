@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package DTC_PB;
+option go_package = "github.com/RileyR387/sc-dtc-client/dtc";
 
 //============================================================================
 // DTC protocol version
