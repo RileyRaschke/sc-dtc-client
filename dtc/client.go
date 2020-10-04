@@ -31,21 +31,26 @@ func init() {
 
 //func Connect( c ConnectArgs ) (dtcConn *dtc.Conn, err error) {
 func Connect( c ConnectArgs ) {
-    fmt.Printf("%s@%s:%d\n", c.Username, c.Host, c.Port )
+
+    fmt.Printf("%s@%s:%s\n", c.Username, c.Host, c.Port )
     uri := net.JoinHostPort(c.Host, c.Port)
+
     conn, err := net.Dial("tcp", uri)
     if err != nil {
         log.Fatalf("Failed to connect to DTC server: %v\n", err)
         os.Exit(1)
     }
+
     logonRequest := LogonRequest{
         Username: c.Username,
         Password: c.Password,
         Integer_1: 2,
         HeartbeatIntervalInSeconds: 6,
-        ClientName: "sc-dtc-client-go",
+        ClientName: "go-dtc",
     }
-    fmt.Fprintf(conn, logonRequest.String() )
+
+    fmt.Fprint(conn, logonRequest)
+    fmt.Fprint(conn, 0x00)
 
     status, err := bufio.NewReader(conn).ReadString('\n')
 

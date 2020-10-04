@@ -92,7 +92,6 @@ func main() {
         viper.GetString("dtc.Username"),
         viper.GetString("dtc.Password"),
     }
-
     dtc.Connect(args)
 }
 
