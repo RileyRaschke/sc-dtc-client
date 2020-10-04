@@ -45,8 +45,8 @@ func init() {
     }
     */
     viper.SetDefault("dtc.Host", "127.0.0.1")
-    viper.SetDefault("dtc.Port", 11099)
-    viper.SetDefault("dtc.HistPort", 11098)
+    viper.SetDefault("dtc.Port", "11099")
+    viper.SetDefault("dtc.HistPort", "11098")
     viper.SetDefault("dtc.Username", "")
     viper.SetDefault("dtc.Password", "")
 }
@@ -87,8 +87,8 @@ func main() {
     }
     args := dtc.ConnectArgs {
         viper.GetString("dtc.Host"),
-        viper.GetInt("dtc.Port"),
-        viper.GetInt("dtc.HistPort"),
+        viper.GetString("dtc.Port"),
+        viper.GetString("dtc.HistPort"),
         viper.GetString("dtc.Username"),
         viper.GetString("dtc.Password"),
     }
