@@ -26,6 +26,7 @@ var (
     //dtcServerPassword = getopt.StringLong("password", 'p', "", "DTC Password")
     //singleThread  = getopt.BoolLong("singlethreaded", 's', "Disable threading")
     genConfig = getopt.BoolLong("genconfig", 'x', "Write example config to \"./" + yamlFile + "\"")
+    client dtc.DtcConnection
 )
 
 func init() {
@@ -92,7 +93,8 @@ func main() {
         viper.GetString("dtc.Username"),
         viper.GetString("dtc.Password"),
     }
-    dtc.Connect(args)
+    //dtc.Connect(args)
+    client.Connect( args )
 }
 
 func configWrite(){
