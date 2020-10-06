@@ -5,6 +5,7 @@ import (
     "log"
     "fmt"
     "net"
+    "io"
     "bufio"
     "encoding/binary"
     proto "github.com/golang/protobuf/proto"
@@ -35,15 +36,13 @@ func Connect( c ConnectArgs ) (*DtcConnection, error){
 }
 
 func (d *DtcConnection) Connect( c ConnectArgs ) (error){
-    fmt.Printf("%s@%s:%s\n", c.Username, c.Host, c.Port )
+    log.Printf("Connecting: %s@%s:%s\n", c.Username, c.Host, c.Port )
     uri := net.JoinHostPort(c.Host, c.Port)
-
     conn, err := net.Dial("tcp", uri)
     if err != nil {
         log.Fatalf("Failed to connect to DTC server: %v\n", err)
         os.Exit(1)
     }
-
     d.conn = conn
     d.connArgs = c
     d.connUri = uri
@@ -62,6 +61,7 @@ func (d *DtcConnection) Logon() {
         ClientName: "go-dtc",
         ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
     }
+    describe( logonRequest.ProtoReflect().Descriptor().FullName() )
 
     msg, err := proto.Marshal( &logonRequest )
     if( err != nil ){
@@ -69,22 +69,17 @@ func (d *DtcConnection) Logon() {
         os.Exit(1)
     }
 
-    status, err := d.SendMessage( msg, DTCMessageType_value["LOGON_REQUEST"] )
+    log.Printf("Sending logon request...")
+    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
 
-    describe(status)
-}
+    log.Printf("Unpacking logon response.")
+    resp := d._GetMessage()
 
-func (d *DtcConnection) SendMessage( msg []byte, mTypeId int32) ([]byte, error) {
-    length := 4 + len(msg)
-    header := make([]byte, 4)
-    binary.LittleEndian.PutUint16(header[0:2], uint16(length))
-    binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
-    message := append(header, msg...)
-    d.conn.Write( message )
-
-    status, err := bufio.NewReader(d.conn).ReadBytes(0x00)
-
-    return status,err
+    logonResponse := LogonResponse{}
+    if err := proto.Unmarshal(resp, &logonResponse); err != nil {
+        log.Fatalln("Failed to parse logonResponse:", err)
+    }
+    describe( logonResponse.String() )
 }
 
 func (d *DtcConnection) SetEncoding() {
@@ -94,29 +89,58 @@ func (d *DtcConnection) SetEncoding() {
         ProtocolType: "DTC",
     }
     msg := dtc_bin_encoder( encodingReq )
-    status, err := d.SendMessage( msg, DTCMessageType_value["ENCODING_REQUEST"] )
+    d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
+    resp := d._GetMessage()
+    describe(resp)
+}
 
-    if( err != nil ){
-        log.Fatalf("Failed to set protocol encoding: %v\n", err)
-        os.Exit(1)
+func PackMessage(msg []byte, mTypeId int32) ([]byte){
+    length := 4 + len(msg)
+    header := make([]byte, 4)
+    binary.LittleEndian.PutUint16(header[0:2], uint16(length))
+    binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
+    message := append(header, msg...)
+    return message
+}
+
+func (d *DtcConnection) _GetMessage() ([]byte) {
+    r := bufio.NewReader(d.conn)
+
+    length, mTypeId := ParseHeaderBytes(r)
+
+    resp := make([]byte, length)
+    _, err := io.ReadFull(r, resp)
+
+    if err != nil {
+        log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
+        return nil
     }
 
-    describe(status)
+    log.Printf("Received %v with byte length %v", DTCMessageType_name[int32(mTypeId)], length )
+    return resp
+}
+
+func ParseHeaderBytes(r io.Reader) (uint16, uint16){
+    hBuf := make([]byte, 4)
+    io.ReadFull(r, hBuf)
+    mLength := binary.LittleEndian.Uint16(hBuf[0:2])
+    mTypeId := binary.LittleEndian.Uint16(hBuf[2:4])
+    return mLength-4, mTypeId
 }
 
 func dtc_bin_encoder( m interface{} ) ([]byte) {
     switch v := m.(type) {
-    case EncodingRequest:
-        bMsg := make([]byte, 8)
-        binary.LittleEndian.PutUint32(bMsg[0:4], uint32(v.ProtocolVersion))
-        binary.LittleEndian.PutUint32(bMsg[4:8], uint32(v.Encoding))
-        bMsg = append([]byte(bMsg),[]byte(v.ProtocolType)... )
-        bMsg = append([]byte(bMsg), 0x00)
-        return bMsg
-    default:
-        log.Printf("Don't know how to bin encode type %T!\n", v)
+        case EncodingRequest:
+            bMsg := make([]byte, 8)
+            binary.LittleEndian.PutUint32(bMsg[0:4], uint32(v.ProtocolVersion))
+            binary.LittleEndian.PutUint32(bMsg[4:8], uint32(v.Encoding))
+            bMsg = append([]byte(bMsg),[]byte(v.ProtocolType)... )
+            bMsg = append([]byte(bMsg), 0x00)
+            return bMsg
+        default:
+            log.Printf("Don't know how to bin encode type %T!\n", v)
     }
-    return nil;
+    return nil
 }
 
 func describe(i interface{}) {
