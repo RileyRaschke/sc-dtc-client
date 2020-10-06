@@ -8,7 +8,10 @@ import (
     "io"
     "bufio"
     "encoding/binary"
+    "reflect"
     proto "github.com/golang/protobuf/proto"
+    //"google.golang.org/protobuf/reflect/protoregistry"
+    "github.com/iancoleman/strcase"
 )
 
 type ConnectArgs struct {
@@ -116,7 +119,39 @@ func (d *DtcConnection) _GetMessage() ([]byte) {
         return nil
     }
 
-    log.Printf("Received %v with byte length %v", DTCMessageType_name[int32(mTypeId)], length )
+    log.Printf("Received %v(%v) with byte length %v", DTCMessageType_name[int32(mTypeId)], int32(mTypeId), length )
+    if DTCMessageType_name[int32(mTypeId)] == "ENCODING_RESPONSE" {
+        // binary encoding... nbd for now
+    } else {
+        //pbtype := proto.MessageType( DTCMessageType_name[int32(mTypeId)] )
+        //pbtype := proto.MessageType( "DTC_PB.LogonResponse" )
+        //pbtype := proto.MessageType( DTCMessageType_name[int32(mTypeId)].(DTCMessageType).String()  )
+        //describe( DTCMessageType(int32(mTypeId)).Type() )
+        //describe( DTCMessageType(int32(mTypeId)).String() )
+
+        //pbtype := proto.MessageType( DTCMessageType(int32(mTypeId)).String()  )
+        //pbtype, err := (*protoregistry.Types).FindMessageByName("DTC_PB.LogonResponse")
+        //pbtype, err := protoregistry.Types(file_DTCProtocol_proto_goTypes).FindMessageByName("DTC_PB.LogonResponse")
+        //pbtype, err := protoregistry.Types(DTCProtocol).FindMessageByName("DTC_PB.LogonResponse")
+        //pbtype, err := protoregistry.GlobalTypes.FindMessageByName("DTC_PB.LogonResponse")
+        //describe(protoregistry.GlobalTypes)
+        //pbtype2, err := (*protoregistry.GlobalTypes).FindMessageByName("DTC_PB.LogonResponse")
+        //pbtype2, err := (*protoregistry.GlobalTypes).FindEnumByName("LOGON_RESPONSE")
+        //describe( pbtype )
+        //fmt.Printf("\n\n")
+        //describe( pbtype2 )
+        /**
+         * `proto.MessageType` is Deprecated but obvi I can't get the recommend one to work ^
+         */
+        pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel(DTCMessageType_name[int32(mTypeId)]) )
+        if pbtype != nil && err == nil {
+            msg := reflect.New(pbtype.Elem()).Interface().(proto.Message)
+            //msg := reflect.New(pbtype).Interface().(proto.Message)
+            //msg := reflect.New((pbtype.(reflect.Type)).Elem()).Interface().(proto.Message)
+            proto.Unmarshal(resp, msg)
+            describe( msg.String() )
+        }
+    }
     return resp
 }
 
