@@ -8,6 +8,7 @@ import (
     "time"
     "io"
     "bufio"
+    "errors"
     "encoding/binary"
     "reflect"
     proto "github.com/golang/protobuf/proto"
@@ -32,6 +33,7 @@ type DtcConnection struct {
     clientClose chan int
     listenClose chan int
     heartbeatUpdate chan proto.Message
+    Connected bool `default: false`
 }
 
 func init() {
@@ -62,22 +64,26 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
 
     d.SetEncoding()
 
+    err = d._Logon()
+    if err != nil {
+        d.Disconnect()
+        return err;
+    }
+    d.Connected = true
     go d._Listen()
-    d._Logon()
-    go d._KeepAlive()
-
-    time.Sleep( 60 * time.Second )
-
-    d.Disconnect()
-
-    return err
+    d._KeepAlive()
+    return nil
 }
 
 func (d *DtcConnection) Disconnect() {
+    log.Printf("Client Disconnecting...")
     d.clientClose <- 0
-    d._Logoff()
-    time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
-    d.listenClose <- 0
+    if d.Connected {
+        d.Connected = false
+        d._Logoff()
+        time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
+        d.listenClose <- 0
+    }
 }
 
 func (d *DtcConnection) _Listen() {
@@ -99,16 +105,21 @@ func (d *DtcConnection) _KeepAlive() {
         case m = <-d.heartbeatUpdate:
             log.Printf(m.String())
         case <-d.clientClose:
-            log.Printf("Closing Client")
+            d.conn.Close()
+            log.Printf("Connection closed")
             return
         default:
             time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
-            d._SendHeartbeat()
+            if d.Connected {
+                d._SendHeartbeat()
+            } else {
+                d.clientClose <- 0
+            }
         }
     }
 }
 
-func (d *DtcConnection) _Logon() {
+func (d *DtcConnection) _Logon() error {
     logonRequest := LogonRequest{
         Username: d.connArgs.Username,
         Password: d.connArgs.Password,
@@ -121,7 +132,7 @@ func (d *DtcConnection) _Logon() {
     //describe( logonRequest.ProtoReflect().Descriptor().FullName() )
 
     msg, err := proto.Marshal( &logonRequest )
-    if( err != nil ){
+    if err != nil {
         log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
         os.Exit(1)
     }
@@ -129,16 +140,18 @@ func (d *DtcConnection) _Logon() {
     log.Printf("Sending LOGON_REQUEST")
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
 
-    /*
-    log.Printf("Unpacking logon response.")
     resp := d._GetMessage()
 
     logonResponse := LogonResponse{}
     if err := proto.Unmarshal(resp, &logonResponse); err != nil {
         log.Fatalln("Failed to parse LogonResponse:", err)
     }
-    describe( logonResponse.String() )
-    */
+    if logonResponse.Result != LogonStatusEnum_LOGON_SUCCESS {
+        log.Fatalln("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
+        return errors.New("Logon Failure")
+    }
+    log.Printf("Logon response: %v", logonResponse.ResultText)
+    return nil
 }
 
 func (d *DtcConnection) _Logoff() {
@@ -147,7 +160,7 @@ func (d *DtcConnection) _Logoff() {
         DoNotReconnect: 1,
     }
     msg, err := proto.Marshal( &logoff )
-    if( err != nil ){
+    if err != nil {
         log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
         os.Exit(1)
     }
@@ -176,7 +189,7 @@ func (d *DtcConnection) _SendHeartbeat() {
         CurrentDateTime: time.Now().Unix(),
     }
     msg, err := proto.Marshal( &heartbeat )
-    if( err != nil ){
+    if err != nil {
         log.Fatalf("Failed to marshal Heartbeat message: %v\n", err)
         os.Exit(1)
     }
@@ -200,6 +213,11 @@ func (d *DtcConnection) _GetMessage() ([]byte) {
     resp := make([]byte, length)
     _, err := io.ReadFull(r, resp)
 
+    if err == io.EOF {
+        log.Printf("Received end of file on communication channel. Exiting...\n")
+        d.Disconnect();
+        return nil
+    }
     if err != nil {
         log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
         return nil

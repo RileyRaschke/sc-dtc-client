@@ -4,7 +4,9 @@ import (
     "fmt"
     "log"
     "os"
+    "os/signal"
 //    "os/user"
+    "syscall"
     "path/filepath"
     "strings"
     "github.com/pborman/getopt/v2"
@@ -94,7 +96,21 @@ func main() {
         viper.GetString("dtc.Password"),
     }
     //dtc.Connect(args)
+    CatchInterupt()
     client.Connect( args )
+}
+
+func CatchInterupt(){
+    c:= make(chan os.Signal)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    go func() {
+        i := <-c
+        log.Printf("\nReceived Interrupt: (%v), exiting...\n", i)
+        if client.Connected {
+            client.Disconnect()
+        }
+        os.Exit(0)
+    }()
 }
 
 func configWrite(){
