@@ -14,6 +14,8 @@ import (
     "github.com/iancoleman/strcase"
 )
 
+const DTC_CLIENT_HEARTBEAT_SECONDS = 5
+
 type ConnectArgs struct {
     Host string
     Port string
@@ -60,7 +62,7 @@ func (d *DtcConnection) Logon() {
         Password: d.connArgs.Password,
         Integer_1: 2,
         TradeMode: 0,
-        HeartbeatIntervalInSeconds: 6,
+        HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
         ClientName: "go-dtc",
         ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
     }
