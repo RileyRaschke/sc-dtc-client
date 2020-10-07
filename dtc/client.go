@@ -5,6 +5,7 @@ import (
     "log"
     "fmt"
     "net"
+    "time"
     "io"
     "bufio"
     "encoding/binary"
@@ -28,6 +29,9 @@ type DtcConnection struct {
     connArgs ConnectArgs
     connUri string
     conn  net.Conn
+    clientClose chan int
+    listenClose chan int
+    heartbeatUpdate chan proto.Message
 }
 
 func init() {
@@ -48,15 +52,63 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
         log.Fatalf("Failed to connect to DTC server: %v\n", err)
         os.Exit(1)
     }
+
     d.conn = conn
     d.connArgs = c
     d.connUri = uri
+    d.clientClose = make(chan int)
+    d.listenClose = make(chan int)
+    d.heartbeatUpdate = make(chan proto.Message)
+
     d.SetEncoding()
-    d.Logon()
+
+    go d._Listen()
+    d._Logon()
+    go d._KeepAlive()
+
+    time.Sleep( 60 * time.Second )
+
+    d.Disconnect()
+
     return err
 }
 
-func (d *DtcConnection) Logon() {
+func (d *DtcConnection) Disconnect() {
+    d.clientClose <- 0
+    d._Logoff()
+    time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
+    d.listenClose <- 0
+}
+
+func (d *DtcConnection) _Listen() {
+    for {
+        select {
+        case <-d.listenClose:
+            log.Printf("Terminating Client listener")
+            return
+        default:
+            d._GetMessage()
+        }
+    }
+}
+
+func (d *DtcConnection) _KeepAlive() {
+    var m proto.Message
+    for {
+        select {
+        case m = <-d.heartbeatUpdate:
+            log.Printf(m.String())
+        case <-d.clientClose:
+            log.Printf("Closing Client")
+            return
+        default:
+            time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
+            d._SendHeartbeat()
+        }
+    }
+}
+
+func (d *DtcConnection) _Logon() {
     logonRequest := LogonRequest{
         Username: d.connArgs.Username,
         Password: d.connArgs.Password,
@@ -66,25 +118,42 @@ func (d *DtcConnection) Logon() {
         ClientName: "go-dtc",
         ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
     }
-    describe( logonRequest.ProtoReflect().Descriptor().FullName() )
+    //describe( logonRequest.ProtoReflect().Descriptor().FullName() )
 
     msg, err := proto.Marshal( &logonRequest )
     if( err != nil ){
-        log.Fatalf("Failed to marshal logonRequest: %v\n", err)
+        log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
         os.Exit(1)
     }
 
-    log.Printf("Sending logon request...")
+    log.Printf("Sending LOGON_REQUEST")
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
 
+    /*
     log.Printf("Unpacking logon response.")
     resp := d._GetMessage()
 
     logonResponse := LogonResponse{}
     if err := proto.Unmarshal(resp, &logonResponse); err != nil {
-        log.Fatalln("Failed to parse logonResponse:", err)
+        log.Fatalln("Failed to parse LogonResponse:", err)
     }
     describe( logonResponse.String() )
+    */
+}
+
+func (d *DtcConnection) _Logoff() {
+    logoff := Logoff{
+        Reason: "Done",
+        DoNotReconnect: 1,
+    }
+    msg, err := proto.Marshal( &logoff )
+    if( err != nil ){
+        log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
+        os.Exit(1)
+    }
+
+    log.Printf("Sending LOGOFF")
+    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGOFF"] ))
 }
 
 func (d *DtcConnection) SetEncoding() {
@@ -94,9 +163,24 @@ func (d *DtcConnection) SetEncoding() {
         ProtocolType: "DTC",
     }
     msg := dtc_bin_encoder( encodingReq )
+    log.Printf("Sending ENCODING_REQUEST")
     d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
-    resp := d._GetMessage()
-    describe(resp)
+    d._GetMessage()
+    //resp := d._GetMessage()
+    //describe(resp)
+}
+
+func (d *DtcConnection) _SendHeartbeat() {
+    heartbeat := Heartbeat{
+        NumDroppedMessages: 0,
+        CurrentDateTime: time.Now().Unix(),
+    }
+    msg, err := proto.Marshal( &heartbeat )
+    if( err != nil ){
+        log.Fatalf("Failed to marshal Heartbeat message: %v\n", err)
+        os.Exit(1)
+    }
+    d.conn.Write( PackMessage(msg, DTCMessageType_value["HEARTBEAT"] ))
 }
 
 func PackMessage(msg []byte, mTypeId int32) ([]byte){
