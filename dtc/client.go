@@ -13,6 +13,7 @@ import (
     "reflect"
     proto "github.com/golang/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoregistry"
+    "strings"
     "github.com/iancoleman/strcase"
 )
 
@@ -62,7 +63,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.listenClose = make(chan int)
     d.heartbeatUpdate = make(chan proto.Message)
 
-    d.SetEncoding()
+    d._SetEncoding()
 
     err = d._Logon()
     if err != nil {
@@ -87,13 +88,21 @@ func (d *DtcConnection) Disconnect() {
 }
 
 func (d *DtcConnection) _Listen() {
+    log.Printf("Client listener started")
     for {
         select {
         case <-d.listenClose:
             log.Printf("Terminating Client listener")
             return
         default:
-            d._GetMessage()
+            //d._NextMessage()
+            msg, _, mTypeStr := d._NextMessage()
+            if mTypeStr == "" {
+                describe(msg)
+            }
+            if msg != nil {
+                fmt.Println(msg.String())
+            }
         }
     }
 }
@@ -140,7 +149,7 @@ func (d *DtcConnection) _Logon() error {
     log.Printf("Sending LOGON_REQUEST")
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
 
-    resp := d._GetMessage()
+    resp, _ := d._GetMessage()
 
     logonResponse := LogonResponse{}
     if err := proto.Unmarshal(resp, &logonResponse); err != nil {
@@ -169,7 +178,7 @@ func (d *DtcConnection) _Logoff() {
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGOFF"] ))
 }
 
-func (d *DtcConnection) SetEncoding() {
+func (d *DtcConnection) _SetEncoding() {
     encodingReq := EncodingRequest{
         ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
         Encoding: EncodingEnum_PROTOCOL_BUFFERS,
@@ -179,8 +188,10 @@ func (d *DtcConnection) SetEncoding() {
     log.Printf("Sending ENCODING_REQUEST")
     d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
     d._GetMessage()
-    //resp := d._GetMessage()
-    //describe(resp)
+    /**
+     * TODO: Handle binary encoding response for log purposes
+    resp := d._GetMessage()
+    */
 }
 
 func (d *DtcConnection) _SendHeartbeat() {
@@ -205,10 +216,16 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     return message
 }
 
-func (d *DtcConnection) _GetMessage() ([]byte) {
+func (d *DtcConnection) _NextMessage() (proto.Message, reflect.Type, string) {
+    bytes, mTypeId := d._GetMessage()
+    m, t := d._ParseMessage( bytes, mTypeId )
+    return m, t, DTCMessageType_name[mTypeId]
+}
+
+func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     r := bufio.NewReader(d.conn)
 
-    length, mTypeId := ParseHeaderBytes(r)
+    length, mTypeId := _ParseHeaderBytes(r)
 
     resp := make([]byte, length)
     _, err := io.ReadFull(r, resp)
@@ -216,55 +233,39 @@ func (d *DtcConnection) _GetMessage() ([]byte) {
     if err == io.EOF {
         log.Printf("Received end of file on communication channel. Exiting...\n")
         d.Disconnect();
-        return nil
+        return nil, 0
     }
     if err != nil {
         log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
-        return nil
+        return nil, 0
     }
 
-    log.Printf("Received %v(%v) with byte length %v", DTCMessageType_name[int32(mTypeId)], int32(mTypeId), length )
-    if DTCMessageType_name[int32(mTypeId)] == "ENCODING_RESPONSE" {
+    log.Printf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+    if DTCMessageType_name[mTypeId] == "ENCODING_RESPONSE" {
         // binary encoding... nbd for now
-    } else {
-        //pbtype := proto.MessageType( DTCMessageType_name[int32(mTypeId)] )
-        //pbtype := proto.MessageType( "DTC_PB.LogonResponse" )
-        //pbtype := proto.MessageType( DTCMessageType_name[int32(mTypeId)].(DTCMessageType).String()  )
-        //describe( DTCMessageType(int32(mTypeId)).Type() )
-        //describe( DTCMessageType(int32(mTypeId)).String() )
-
-        //pbtype := proto.MessageType( DTCMessageType(int32(mTypeId)).String()  )
-        //pbtype, err := (*protoregistry.Types).FindMessageByName("DTC_PB.LogonResponse")
-        //pbtype, err := protoregistry.Types(file_DTCProtocol_proto_goTypes).FindMessageByName("DTC_PB.LogonResponse")
-        //pbtype, err := protoregistry.Types(DTCProtocol).FindMessageByName("DTC_PB.LogonResponse")
-        //pbtype, err := protoregistry.GlobalTypes.FindMessageByName("DTC_PB.LogonResponse")
-        //describe(protoregistry.GlobalTypes)
-        //pbtype2, err := (*protoregistry.GlobalTypes).FindMessageByName("DTC_PB.LogonResponse")
-        //pbtype2, err := (*protoregistry.GlobalTypes).FindEnumByName("LOGON_RESPONSE")
-        //describe( pbtype )
-        //fmt.Printf("\n\n")
-        //describe( pbtype2 )
-        /**
-         * `proto.MessageType` is Deprecated but obvi I can't get the recommend one to work ^
-         */
-        pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel(DTCMessageType_name[int32(mTypeId)]) )
-        if pbtype != nil && err == nil {
-            msg := reflect.New(pbtype.Elem()).Interface().(proto.Message)
-            //msg := reflect.New(pbtype).Interface().(proto.Message)
-            //msg := reflect.New((pbtype.(reflect.Type)).Elem()).Interface().(proto.Message)
-            proto.Unmarshal(resp, msg)
-            describe( msg.String() )
-        }
     }
-    return resp
+    return resp, mTypeId
 }
 
-func ParseHeaderBytes(r io.Reader) (uint16, uint16){
+func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message, reflect.Type) {
+    var msg proto.Message
+    pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel( strings.ToLower( DTCMessageType_name[mTypeId] ) ) )
+    //if pbtype != nil && err == nil {
+    if pbtype != nil {
+        msg = reflect.New(pbtype.Elem()).Interface().(proto.Message)
+        //msg := reflect.New(pbtype).Interface().(proto.Message)
+        //msg := reflect.New((pbtype.(reflect.Type)).Elem()).Interface().(proto.Message)
+        proto.Unmarshal(bMsg, msg)
+    }
+    return msg, pbtype
+}
+
+func _ParseHeaderBytes(r io.Reader) (uint16, int32){
     hBuf := make([]byte, 4)
     io.ReadFull(r, hBuf)
     mLength := binary.LittleEndian.Uint16(hBuf[0:2])
     mTypeId := binary.LittleEndian.Uint16(hBuf[2:4])
-    return mLength-4, mTypeId
+    return mLength-4, int32(mTypeId)
 }
 
 func dtc_bin_encoder( m interface{} ) ([]byte) {
