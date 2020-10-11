@@ -106,11 +106,14 @@ func main() {
             return
         default:
             if client.Connected() {
-                log.Printf("Client connected...\n")
+                //log.Printf("Client connected...\n")
                 time.Sleep( 1 * time.Second )
             } else {
                 log.Printf("Client unexpectedly disconnected from server\n")
                 //quit <- 0
+                /*
+                * TODO: Attempt reconnect? Client connection will need timeout function..
+                */
                 time.Sleep( 1 * time.Second )
                 return
             }

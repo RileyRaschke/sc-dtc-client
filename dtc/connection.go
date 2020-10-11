@@ -11,7 +11,9 @@ import (
     "errors"
     "encoding/binary"
     "reflect"
-    proto "github.com/golang/protobuf/proto"
+    "github.com/golang/protobuf/proto"
+    "google.golang.org/protobuf/reflect/protoreflect"
+    "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
     "github.com/iancoleman/strcase"
@@ -37,7 +39,8 @@ func init() {
 func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     log.Printf("Connecting: %s@%s:%s\n", c.Username, c.Host, c.Port )
     uri := net.JoinHostPort(c.Host, c.Port)
-    conn, err := net.Dial("tcp", uri)
+    dialer := net.Dialer{Timeout: 4*time.Second}
+    conn, err := dialer.Dial("tcp", uri)
     if err != nil {
         log.Fatalf("Failed to connect to DTC server: %v\n", err)
         os.Exit(1)
@@ -83,7 +86,7 @@ func (d *DtcConnection) _Listen() {
     for {
         select {
         case <-d.listenClose:
-            log.Printf("Terminating Client listener")
+            log.Printf("Terminating client listener")
             return
         default:
             msg, _, mTypeStr := d._NextMessage()
@@ -92,9 +95,10 @@ func (d *DtcConnection) _Listen() {
                 describe(msg)
             }
             if msg != nil {
-                fmt.Println(msg.String())
+                //fmt.Println(msg.String())
+                fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
             } else {
-                log.Printf("received %v with empty body", mTypeStr)
+                log.Printf("Received %v with empty body", mTypeStr)
             }
         }
     }
@@ -231,7 +235,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
         switch t := err.(type) {
         case *net.OpError:
             if t.Op == "read" {
-                log.Printf("reader closed")
+                log.Printf("Reader closed")
             } else {
                 log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
             }
