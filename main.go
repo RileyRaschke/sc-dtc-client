@@ -5,6 +5,7 @@ import (
     "log"
     "os"
     "os/signal"
+    "time"
 //    "os/user"
     "syscall"
     "path/filepath"
@@ -21,14 +22,8 @@ var (
     envPrefix = "DTCCLIENT"
     configSearchPaths = []string {".", "./etc", "$HOME/.dtc-client-go/", "$HOME/etc", "/etc"}
     version = "undefined"
-
-    //dtcServerHost = getopt.StringLong("host", 'h', "", "DTC Server Host")
-    //dtcServerPort = getopt.Int("port", 'p', "", "DTC Server Port")
-    //dtcServerUsername = getopt.StringLong("username", 'u', "", "DTC Username")
-    //dtcServerPassword = getopt.StringLong("password", 'p', "", "DTC Password")
-    //singleThread  = getopt.BoolLong("singlethreaded", 's', "Disable threading")
     genConfig = getopt.BoolLong("genconfig", 'x', "Write example config to \"./" + yamlFile + "\"")
-    client dtc.DtcConnection
+    client *dtc.DtcClient
 )
 
 func init() {
@@ -95,21 +90,42 @@ func main() {
         viper.GetString("dtc.Username"),
         viper.GetString("dtc.Password"),
     }
-    //dtc.Connect(args)
-    CatchInterupt()
-    client.Connect( args )
+
+    client, err := dtc.Connect( args )
+    if err != nil {
+        log.Fatalf("Failed to connect with: %v\n", err)
+    }
+    quit := make(chan int)
+    CatchInterupt(quit)
+    for {
+        select {
+        case <-quit:
+            if client.Connected() {
+                client.Disconnect()
+            }
+            return
+        default:
+            if client.Connected() {
+                log.Printf("Client connected...\n")
+                time.Sleep( 1 * time.Second )
+            } else {
+                log.Printf("Client unexpectedly disconnected from server\n")
+                //quit <- 0
+                time.Sleep( 1 * time.Second )
+                return
+            }
+        }
+    }
+    os.Exit(0)
 }
 
-func CatchInterupt(){
+func CatchInterupt(quit chan int){
     c:= make(chan os.Signal)
     signal.Notify(c, os.Interrupt, syscall.SIGTERM)
     go func() {
         i := <-c
-        log.Printf("\nReceived Interrupt: (%v), exiting...\n", i)
-        if client.Connected {
-            client.Disconnect()
-        }
-        os.Exit(0)
+        log.Printf("Received signal: (%v), exiting...\n", i)
+        quit <- 0
     }()
 }
 
