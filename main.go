@@ -55,9 +55,7 @@ func main() {
                 time.Sleep( 1 * time.Second )
             } else {
                 log.Printf("Client unexpectedly disconnected from server\n")
-                /*
-                * TODO: Attempt reconnect? Client connection will need timeout function..
-                */
+                // TODO: Attempt reconnect? Client connection will need timeout function..
                 time.Sleep( 1 * time.Second )
                 return
             }

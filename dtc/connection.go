@@ -153,7 +153,13 @@ func (d *DtcConnection) _Logon() error {
         log.Fatalln("Failed to parse LogonResponse:", err)
     }
     if logonResponse.Result != LogonStatusEnum_LOGON_SUCCESS {
-        log.Fatalln("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
+        /*
+        log.WithFields(log.Fields{
+            "result": logonResponse.Result,
+            "msg": logonResponse.ResultText,
+        }).Fatal("Logon Failed")
+        */
+        log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
         return errors.New("Logon Failure")
     }
     log.Printf("Logon response: %v", logonResponse.ResultText)
