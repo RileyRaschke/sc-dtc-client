@@ -2,14 +2,16 @@ package main
 
 import (
     "fmt"
-    //"log"
     log "github.com/sirupsen/logrus"
     "os"
     "os/signal"
     "time"
     "syscall"
+    "runtime"
+    "path"
     "path/filepath"
     "strings"
+    "strconv"
     "github.com/pborman/getopt/v2"
     "github.com/spf13/viper"
     "github.com/RileyR387/sc-dtc-client/dtc"
@@ -22,33 +24,28 @@ var (
     envPrefix = "DTCCLIENT"
     configSearchPaths = []string {".", "./etc", "$HOME/.dtc-client-go/", "$HOME/etc", "/etc"}
     genConfig = getopt.BoolLong("genconfig", 'x', "Write example config to \"./" + yamlFile + "\"")
-    /*
-    iLogger = log.New(os.Stderr, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-    wLogger = log.New(os.Stderr, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
-    eLogger = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-    */
 
-    client *dtc.DtcClient
+    client dtc.DtcClient
 )
 
 func init() {
-    //log.SetPrefix("[main] ")
     viper.SetConfigName(yamlFile)
     viper.SetConfigType("yaml")
     viper.SetEnvPrefix(envPrefix)
     viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
     viper.AutomaticEnv()
+
     for _, p := range configSearchPaths {
         viper.AddConfigPath(p)
     }
+
     viper.SetDefault("dtc.Host", "127.0.0.1")
     viper.SetDefault("dtc.Port", "11099")
     viper.SetDefault("dtc.HistPort", "11098")
     viper.SetDefault("dtc.Username", "")
     viper.SetDefault("dtc.Password", "")
-}
+    viper.SetDefault("log.level", "INFO")
 
-func main() {
     getopt.SetUsage(func() { usage() })
     getopt.Parse()
 
@@ -69,6 +66,28 @@ func main() {
         }
     }
 
+    formatter := &log.TextFormatter{
+        FullTimestamp: true,
+        TimestampFormat: "2006-01-02 15:04:05.000",
+        PadLevelText: true,
+        QuoteEmptyFields: true,
+    }
+
+    log.SetFormatter( formatter )
+
+    logLevel, _ := log.ParseLevel( viper.GetString("log.level") )
+
+    log.SetLevel( logLevel )
+
+    if log.GetLevel() == log.TraceLevel {
+        log.SetReportCaller(true)
+        formatter.CallerPrettyfier = LogPrettyTrace
+    }
+
+}
+
+func main() {
+
     args := dtc.ConnectArgs {
         viper.GetString("dtc.Host"),
         viper.GetString("dtc.Port"),
@@ -77,7 +96,8 @@ func main() {
         viper.GetString("dtc.Password"),
     }
 
-    client, err := dtc.Connect( args )
+    //client, err := dtc.Connect( args )
+    err := client.Connect( args )
     if err != nil {
         log.Fatalf("Failed to connect with: %v\n", err)
     }
@@ -151,5 +171,12 @@ OPTIONS
 `, me, u[1])
 
     os.Exit(1)
+}
+
+func LogPrettyTrace(f *runtime.Frame) (function string, file string){
+    //function = path.Base(f.Function)
+    function = ""
+    file = " " + path.Base(f.File) + ":" + strconv.Itoa(f.Line)
+    return function, file
 }
 

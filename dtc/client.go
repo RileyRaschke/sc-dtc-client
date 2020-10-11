@@ -1,8 +1,7 @@
 package dtc
 
 import (
-    "log"
-    //log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
 )
 
 type DtcClient struct {
@@ -18,7 +17,21 @@ type ConnectArgs struct {
 }
 
 func init() {
-    log.SetPrefix("[DtcClient] ")
+    //log.SetPrefix("[DtcClient] ")
+}
+
+func Connect( c ConnectArgs ) (*DtcClient, error){
+    dc := &DtcClient{
+        dtcConn: &DtcConnection{},
+    }
+    err := dc.dtcConn.Connect(c)
+    return dc, err
+}
+
+func (dc *DtcClient) Connect( c ConnectArgs ) (error){
+    dc.dtcConn = &DtcConnection{}
+    err := dc.dtcConn.Connect(c)
+    return err
 }
 
 func (c *DtcClient) Connected() (bool){
@@ -35,13 +48,5 @@ func (c *DtcClient) Disconnect() {
         log.Printf("No connection found!\n")
 
     }
-}
-
-func Connect( c ConnectArgs ) (*DtcClient, error){
-    dc := &DtcClient{
-        dtcConn: &DtcConnection{},
-    }
-    err := dc.dtcConn.Connect(c)
-    return dc, err
 }
 

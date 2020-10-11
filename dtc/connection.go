@@ -2,8 +2,7 @@ package dtc
 
 import (
     "os"
-    "log"
-    //log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
     "fmt"
     "net"
     "time"
@@ -34,7 +33,7 @@ type DtcConnection struct {
 }
 
 func init() {
-    log.SetPrefix("[DtcConnection] ")
+    //log.SetPrefix("[DtcConnection] ")
 }
 
 func (d *DtcConnection) Connect( c ConnectArgs ) (error){
