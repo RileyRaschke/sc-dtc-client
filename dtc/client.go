@@ -2,6 +2,7 @@ package dtc
 
 import (
     "log"
+    //log "github.com/sirupsen/logrus"
 )
 
 type DtcClient struct {
@@ -14,6 +15,10 @@ type ConnectArgs struct {
     HistPort string
     Username string
     Password string
+}
+
+func init() {
+    log.SetPrefix("[DtcClient] ")
 }
 
 func (c *DtcClient) Connected() (bool){
@@ -30,10 +35,6 @@ func (c *DtcClient) Disconnect() {
         log.Printf("No connection found!\n")
 
     }
-}
-
-func init() {
-    log.SetPrefix("[dtcClient] ")
 }
 
 func Connect( c ConnectArgs ) (*DtcClient, error){
