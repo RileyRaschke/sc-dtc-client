@@ -33,7 +33,6 @@ type DtcConnection struct {
 }
 
 func init() {
-    //log.SetPrefix("[DtcConnection] ")
 }
 
 func (d *DtcConnection) Connect( c ConnectArgs ) (error){
@@ -156,7 +155,7 @@ func (d *DtcConnection) _Logon() error {
         /*
         log.WithFields(log.Fields{
             "result": logonResponse.Result,
-            "msg": logonResponse.ResultText,
+            "desc": logonResponse.ResultText,
         }).Fatal("Logon Failed")
         */
         log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)

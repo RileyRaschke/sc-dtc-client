@@ -2,6 +2,7 @@ package dtc
 
 import (
     log "github.com/sirupsen/logrus"
+    "github.com/golang/protobuf/proto"
 )
 
 type DtcClient struct {
@@ -17,7 +18,6 @@ type ConnectArgs struct {
 }
 
 func init() {
-    //log.SetPrefix("[DtcClient] ")
 }
 
 func Connect( c ConnectArgs ) (*DtcClient, error){
@@ -48,5 +48,53 @@ func (c *DtcClient) Disconnect() {
         log.Printf("No connection found!\n")
 
     }
+}
+
+func (c *DtcClient) ListAccounts() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) CurrentPositions() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) ListOpenOrders() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) ListHistoricalFills() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) ListHistoricalOrders() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) AddSymbol(symbol string) (x error){
+    return x
+}
+
+func (c *DtcClient) RemoveSymbol(symbol string) (x error){
+    return x
+}
+
+func (c *DtcClient) GetHistoricalData() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) ListSymobls() (x []string){
+    return x
+}
+
+func (c *DtcClient) NextTick() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) NextUpdate() (x []proto.Message){
+    return x
+}
+
+func (c *DtcClient) NextPositionUpdate() (x []proto.Message){
+    return x
 }
 
