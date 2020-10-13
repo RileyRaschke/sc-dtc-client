@@ -42,11 +42,10 @@ func (c *DtcClient) Connected() (bool){
 }
 func (c *DtcClient) Disconnect() {
     if c.dtcConn != nil {
-        log.Printf("Client disconnecting...\n")
+        log.Info("Client disconnecting...\n")
         c.dtcConn.Disconnect()
     } else {
-        log.Printf("No connection found!\n")
-
+        log.Warn("No connection found!\n")
     }
 }
 

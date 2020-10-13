@@ -25,11 +25,14 @@ type DtcConnection struct {
     connArgs ConnectArgs
     connUri string
     conn  net.Conn
+    connected bool `default: false`
     reader io.Reader
+    requestId int32 `default: 101`
     clientClose chan int
     listenClose chan int
     heartbeatUpdate chan proto.Message
-    connected bool `default: false`
+    securityMap map[int32] *SecurityDefinition
+    accountMap  map[string] *AccountBalance
 }
 
 func init() {
@@ -66,16 +69,32 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.listenClose = make(chan int)
     d.heartbeatUpdate = make(chan proto.Message)
 
+    d.securityMap = make(map[int32]*SecurityDefinition)
+    d.accountMap = make(map[string]*AccountBalance)
+
     d._SetEncoding()
 
     err = d._Logon()
     if err != nil {
         d.Disconnect()
-        return err;
+        return err
     }
     d.connected = true
     go d._Listen()
     go d._KeepAlive()
+
+    err = d.LoadAccounts()
+
+    if err != nil {
+        return err
+    }
+
+    err = d.AccountBlanaceRefresh()
+
+    if err != nil {
+        return err
+    }
+
     return nil
 }
 
@@ -117,7 +136,8 @@ func (d *DtcConnection) _Logon() error {
         Username: d.connArgs.Username,
         Password: d.connArgs.Password,
         Integer_1: 2,
-        TradeMode: TradeModeEnum_TRADE_MODE_UNSET,
+        //TradeMode: TradeModeEnum_TRADE_MODE_UNSET,
+        TradeMode: TradeModeEnum_TRADE_MODE_LIVE,
         //TradeMode: TradeModeEnum_TRADE_MODE_SIMULATED,
         HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
         ClientName: "go-dtc",
@@ -221,6 +241,8 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 
     if length == 0  {
         log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+    } else if log.GetLevel() == log.TraceLevel {
+        log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)
@@ -230,14 +252,14 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
         switch t := err.(type) {
         case *net.OpError:
             if t.Op == "read" {
-                log.Warnf("Reader closed")
+                log.Info("Reader closed")
             } else {
                 log.Errorf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
             }
             return nil, 0
         default:
             if err == io.EOF {
-                log.Warnf("Received end of file on communication channel. Exiting...\n")
+                log.Warn("Received end of file on communication channel. Exiting...\n")
                 d.Disconnect()
                 return nil, 0
             } else {
@@ -265,6 +287,11 @@ func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message
         proto.Unmarshal(bMsg, msg)
     }
     return msg, pbtype
+}
+
+func (d *DtcConnection) nextRequestID() (int32){
+    d.requestId++
+    return d.requestId
 }
 
 func _ParseHeaderBytes(r io.Reader) (uint16, int32){

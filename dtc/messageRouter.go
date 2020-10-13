@@ -27,6 +27,10 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         return // server action
     case DTCMessageType_ENCODING_RESPONSE:
         return // handled upon request
+    case DTCMessageType_SECURITY_DEFINITION_RESPONSE:
+        //symbolAdd <-msg.(SecurityDefinitionResponse)
+        d.addSecurity( msg.(*SecurityDefinition) )
+        return
     // Market data
     case DTCMessageType_MARKET_DATA_REQUEST:
         fallthrough
@@ -147,6 +151,7 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case DTCMessageType_TRADE_ACCOUNTS_REQUEST:
         fallthrough
     case DTCMessageType_TRADE_ACCOUNT_RESPONSE:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
         fallthrough
     // Symbol discovery and security definitions
     case DTCMessageType_EXCHANGE_LIST_REQUEST:
@@ -160,8 +165,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case DTCMessageType_SYMBOLS_FOR_UNDERLYING_REQUEST:
         fallthrough
     case DTCMessageType_SECURITY_DEFINITION_FOR_SYMBOL_REQUEST:
-        fallthrough
-    case DTCMessageType_SECURITY_DEFINITION_RESPONSE:
         fallthrough
     case DTCMessageType_SYMBOL_SEARCH_REQUEST:
         fallthrough
