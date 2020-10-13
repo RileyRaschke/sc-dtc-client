@@ -12,7 +12,7 @@ import (
     "encoding/binary"
     "reflect"
     "github.com/golang/protobuf/proto"
-    "google.golang.org/protobuf/reflect/protoreflect"
+    //"google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
@@ -35,8 +35,21 @@ type DtcConnection struct {
 func init() {
 }
 
+func (d *DtcConnection) _Listen() {
+    log.Infof("Client listener started")
+    for {
+        select {
+        case <-d.listenClose:
+            log.Infof("Terminating client listener")
+            return
+        default:
+            d._RouteMessage( d._NextMessage() )
+        }
+    }
+}
+
 func (d *DtcConnection) Connect( c ConnectArgs ) (error){
-    log.Printf("Connecting: %s@%s:%s\n", c.Username, c.Host, c.Port )
+    log.Infof("Connecting: %s@%s:%s\n", c.Username, c.Host, c.Port )
     uri := net.JoinHostPort(c.Host, c.Port)
     dialer := net.Dialer{Timeout: 4*time.Second}
     conn, err := dialer.Dial("tcp", uri)
@@ -67,40 +80,16 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
 }
 
 func (d *DtcConnection) Disconnect() {
-    d.clientClose <- 0
+    d.clientClose <-0
     if d.connected {
         d._Logoff()
         d.conn.Close()
         d.connected = false
-        d.listenClose <- 0
-        log.Printf("Connection closed")
+        d.listenClose <-0
     } else {
         d.conn.Close()
-        log.Printf("Connection closed")
     }
-}
-
-func (d *DtcConnection) _Listen() {
-    log.Printf("Client listener started")
-    for {
-        select {
-        case <-d.listenClose:
-            log.Printf("Terminating client listener")
-            return
-        default:
-            msg, _, mTypeStr := d._NextMessage()
-            if mTypeStr == "" {
-                log.Printf("No message type determined!\n")
-                describe(msg)
-            }
-            if msg != nil {
-                //fmt.Println(msg.String())
-                fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
-            } else {
-                log.Printf("Received %v with empty body", mTypeStr)
-            }
-        }
-    }
+    log.Info("Connection closed")
 }
 
 func (d *DtcConnection) _KeepAlive() {
@@ -108,16 +97,16 @@ func (d *DtcConnection) _KeepAlive() {
     for {
         select {
         case m = <-d.heartbeatUpdate:
-            log.Printf(m.String())
+            log.Warn(m.String()) // Please fire? Haven't seen one yet...
         case <-d.clientClose:
-            log.Printf("Heartbeat terminated\n")
+            log.Debugf("Heartbeat terminated\n")
             return
         default:
             time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
             if d.connected {
                 d._SendHeartbeat()
             } else {
-                d.clientClose <- 0
+                d.clientClose <-0
             }
         }
     }
@@ -142,7 +131,7 @@ func (d *DtcConnection) _Logon() error {
         os.Exit(1)
     }
 
-    log.Printf("Sending LOGON_REQUEST")
+    log.Debug("Sending LOGON_REQUEST")
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
 
     resp, _ := d._GetMessage()
@@ -161,7 +150,8 @@ func (d *DtcConnection) _Logon() error {
         log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
         return errors.New("Logon Failure")
     }
-    log.Printf("Logon response: %v", logonResponse.ResultText)
+    log.Debugf("Logon response: %v", logonResponse.ResultText)
+    fmt.Println( protojson.Format(&logonResponse) )
     return nil
 }
 
@@ -176,9 +166,9 @@ func (d *DtcConnection) _Logoff() {
         os.Exit(1)
     }
 
-    log.Printf("Sending LOGOFF")
+    log.Debug("Sending LOGOFF")
     d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGOFF"] ))
-    log.Printf("Logoff request sent")
+    log.Trace("Logoff request sent")
 }
 
 func (d *DtcConnection) _SetEncoding() {
@@ -188,7 +178,7 @@ func (d *DtcConnection) _SetEncoding() {
         ProtocolType: "DTC",
     }
     msg := dtc_bin_encoder( encodingReq )
-    log.Printf("Sending ENCODING_REQUEST")
+    log.Debug("Sending ENCODING_REQUEST")
     d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
     d._GetMessage()
     /**
@@ -219,10 +209,10 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     return message
 }
 
-func (d *DtcConnection) _NextMessage() (proto.Message, reflect.Type, string) {
+func (d *DtcConnection) _NextMessage() (proto.Message, reflect.Type, int32) {
     bytes, mTypeId := d._GetMessage()
     m, t := d._ParseMessage( bytes, mTypeId )
-    return m, t, DTCMessageType_name[mTypeId]
+    return m, t, mTypeId
 }
 
 func (d *DtcConnection) _GetMessage() ([]byte, int32) {
@@ -230,7 +220,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     length, mTypeId := _ParseHeaderBytes(d.reader)
 
     if length == 0  {
-        log.Printf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)
@@ -240,26 +230,25 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
         switch t := err.(type) {
         case *net.OpError:
             if t.Op == "read" {
-                log.Printf("Reader closed")
+                log.Warnf("Reader closed")
             } else {
-                log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
+                log.Errorf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
             }
             return nil, 0
         default:
             if err == io.EOF {
-                log.Printf("Received end of file on communication channel. Exiting...\n")
+                log.Warnf("Received end of file on communication channel. Exiting...\n")
                 d.Disconnect()
                 return nil, 0
             } else {
-                //describe( err )
-                log.Printf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
+                log.Errorf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
                 return nil, 0
             }
         }
     }
 
-    log.Printf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
-    if DTCMessageType_name[mTypeId] == "ENCODING_RESPONSE" {
+    //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+    if DTCMessageType(mTypeId) == DTCMessageType_ENCODING_RESPONSE {
         // binary encoding... nbd for now
     }
     return resp, mTypeId
@@ -296,7 +285,7 @@ func dtc_bin_encoder( m interface{} ) ([]byte) {
             bMsg = append([]byte(bMsg), 0x00)
             return bMsg
         default:
-            log.Printf("Don't know how to bin encode type %T!\n", v)
+            log.Warnf("Don't know how to bin encode type %T!\n", v)
     }
     return nil
 }

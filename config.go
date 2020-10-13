@@ -57,7 +57,6 @@ func init() {
     }
 
     initLogger( viper.GetString("log.level") )
-
 }
 
 func configWrite(){
