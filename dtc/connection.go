@@ -8,12 +8,12 @@ import (
     "time"
     "io"
     "bufio"
-    "errors"
+    //"errors"
     "encoding/binary"
     "reflect"
     "github.com/golang/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoreflect"
-    "google.golang.org/protobuf/encoding/protojson"
+    //"google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
     "github.com/iancoleman/strcase"
@@ -27,7 +27,7 @@ type DtcConnection struct {
     conn  net.Conn
     connected bool `default: false`
     reader io.Reader
-    requestId int32 `default: 101`
+    requestId int32
     clientClose chan int
     listenClose chan int
     heartbeatUpdate chan proto.Message
@@ -83,12 +83,15 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     go d._Listen()
     go d._KeepAlive()
 
+    time.Sleep( 3*time.Second )
+
     err = d.LoadAccounts()
 
     if err != nil {
         return err
     }
 
+    time.Sleep( 3*time.Second )
     err = d.AccountBlanaceRefresh()
 
     if err != nil {
@@ -131,50 +134,6 @@ func (d *DtcConnection) _KeepAlive() {
     }
 }
 
-func (d *DtcConnection) _Logon() error {
-    logonRequest := LogonRequest{
-        Username: d.connArgs.Username,
-        Password: d.connArgs.Password,
-        Integer_1: 2,
-        //TradeMode: TradeModeEnum_TRADE_MODE_UNSET,
-        TradeMode: TradeModeEnum_TRADE_MODE_LIVE,
-        //TradeMode: TradeModeEnum_TRADE_MODE_SIMULATED,
-        HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
-        ClientName: "go-dtc",
-        ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
-    }
-    //describe( logonRequest.ProtoReflect().Descriptor().FullName() )
-
-    msg, err := proto.Marshal( &logonRequest )
-    if err != nil {
-        log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
-        os.Exit(1)
-    }
-
-    log.Debug("Sending LOGON_REQUEST")
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
-
-    resp, _ := d._GetMessage()
-
-    logonResponse := LogonResponse{}
-    if err := proto.Unmarshal(resp, &logonResponse); err != nil {
-        log.Fatalln("Failed to parse LogonResponse:", err)
-    }
-    if logonResponse.Result != LogonStatusEnum_LOGON_SUCCESS {
-        /*
-        log.WithFields(log.Fields{
-            "result": logonResponse.Result,
-            "desc": logonResponse.ResultText,
-        }).Fatal("Logon Failed")
-        */
-        log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
-        return errors.New("Logon Failure")
-    }
-    log.Debugf("Logon response: %v", logonResponse.ResultText)
-    fmt.Println( protojson.Format(&logonResponse) )
-    return nil
-}
-
 func (d *DtcConnection) _Logoff() {
     logoff := Logoff{
         Reason: "Done",
@@ -200,7 +159,8 @@ func (d *DtcConnection) _SetEncoding() {
     msg := dtc_bin_encoder( encodingReq )
     log.Debug("Sending ENCODING_REQUEST")
     d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
-    d._GetMessage()
+    respBin, mTypeId := d._GetMessage()
+    log.Debugf("Received %v(%v) with bytes %v", DTCMessageType_name[mTypeId], mTypeId, respBin )
     /**
      * TODO: Handle binary encoding response for log purposes
     resp := d._GetMessage()
@@ -242,7 +202,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     if length == 0  {
         log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     } else if log.GetLevel() == log.TraceLevel {
-        log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)
