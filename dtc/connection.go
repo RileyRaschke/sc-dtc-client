@@ -8,12 +8,12 @@ import (
     "time"
     "io"
     "bufio"
-    //"errors"
+    "errors"
     "encoding/binary"
     "reflect"
     "github.com/golang/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoreflect"
-    //"google.golang.org/protobuf/encoding/protojson"
+    "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
     "github.com/iancoleman/strcase"
@@ -82,10 +82,17 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connected = true
     go d._Listen()
     go d._KeepAlive()
+    go d.initTrading()
 
+    return nil
+}
+/**
+* Kinda a test bed for now.
+*/
+func (d *DtcConnection) initTrading() (error) {
     time.Sleep( 3*time.Second )
 
-    err = d.LoadAccounts()
+    err := d.LoadAccounts()
 
     if err != nil {
         return err
@@ -94,11 +101,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     time.Sleep( 3*time.Second )
     err = d.AccountBlanaceRefresh()
 
-    if err != nil {
-        return err
-    }
-
-    return nil
+    return err
 }
 
 func (d *DtcConnection) Disconnect() {
@@ -132,6 +135,51 @@ func (d *DtcConnection) _KeepAlive() {
             }
         }
     }
+}
+
+func (d *DtcConnection) _Logon() error {
+    logonRequest := LogonRequest{
+        Username: d.connArgs.Username,
+        Password: d.connArgs.Password,
+        Integer_1: 2,
+        //TradeMode: TradeModeEnum_TRADE_MODE_UNSET,
+        TradeMode: TradeModeEnum_TRADE_MODE_LIVE,
+        //TradeMode: TradeModeEnum_TRADE_MODE_SIMULATED,
+        HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
+        ClientName: "go-dtc",
+        ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
+    }
+    //describe( logonRequest.ProtoReflect().Descriptor().FullName() )
+    fmt.Println( protojson.Format(&logonRequest) )
+
+    msg, err := proto.Marshal( &logonRequest )
+    if err != nil {
+        log.Fatalf("Failed to marshal LogonRequest message: %v\n", err)
+        os.Exit(1)
+    }
+
+    log.Debug("Sending LOGON_REQUEST")
+    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
+
+    resp, mTypeId := d._GetMessage()
+
+    logonResponse := LogonResponse{}
+    if err := proto.Unmarshal(resp, &logonResponse); err != nil {
+        log.Fatalln("Failed to parse LogonResponse:", err)
+    }
+    if logonResponse.Result != LogonStatusEnum_LOGON_SUCCESS {
+        /*
+        log.WithFields(log.Fields{
+            "result": logonResponse.Result,
+            "desc": logonResponse.ResultText,
+        }).Fatal("Logon Failed")
+        */
+        log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
+        return errors.New("Logon Failure")
+    }
+    log.Debugf("Received %v result: %v", DTCMessageType_name[mTypeId], logonResponse.ResultText)
+    fmt.Println( protojson.Format(&logonResponse) )
+    return nil
 }
 
 func (d *DtcConnection) _Logoff() {

@@ -20,7 +20,44 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case DTCMessageType_LOGON_RESPONSE:
         return // handled at logon
     case DTCMessageType_HEARTBEAT:
-        d.heartbeatUpdate <-msg
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        d.heartbeatUpdate <-msg.(*Heartbeat)
+        return
+    // Account list
+    case DTCMessageType_TRADE_ACCOUNT_RESPONSE:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_TRADE_ACCOUNTS_REQUEST:
+        return // server action
+    // Account balance
+    case DTCMessageType_ACCOUNT_BALANCE_UPDATE:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
+        return
+    case DTCMessageType_ACCOUNT_BALANCE_REQUEST:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_ACCOUNT_BALANCE_REJECT:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_REJECT:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_COMPLETE:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REQUEST:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
+    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        return
     case DTCMessageType_LOGOFF:
         return // server action
     case DTCMessageType_ENCODING_REQUEST:
@@ -147,12 +184,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         fallthrough
     case DTCMessageType_POSITION_UPDATE:
         fallthrough
-    // Account list
-    case DTCMessageType_TRADE_ACCOUNTS_REQUEST:
-        fallthrough
-    case DTCMessageType_TRADE_ACCOUNT_RESPONSE:
-        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        fallthrough
     // Symbol discovery and security definitions
     case DTCMessageType_EXCHANGE_LIST_REQUEST:
         fallthrough
@@ -169,25 +200,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case DTCMessageType_SYMBOL_SEARCH_REQUEST:
         fallthrough
     case DTCMessageType_SECURITY_DEFINITION_REJECT:
-        fallthrough
-    // Account balance
-    case DTCMessageType_ACCOUNT_BALANCE_REQUEST:
-        fallthrough
-    case DTCMessageType_ACCOUNT_BALANCE_REJECT:
-        fallthrough
-    case DTCMessageType_ACCOUNT_BALANCE_UPDATE:
-        fallthrough
-    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT:
-        fallthrough
-    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_REJECT:
-        fallthrough
-    case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_COMPLETE:
-        fallthrough
-    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REQUEST:
-        fallthrough
-    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
-        fallthrough
-    case DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
         fallthrough
     // Logging
     case DTCMessageType_USER_MESSAGE:
