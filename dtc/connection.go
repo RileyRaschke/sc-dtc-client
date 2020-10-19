@@ -30,7 +30,8 @@ type DtcConnection struct {
     requestId int32
     clientClose chan int
     listenClose chan int
-    heartbeatUpdate chan proto.Message
+    lastHeartbeatResponse int64
+    heartbeatUpdate chan *Heartbeat
     securityMap map[int32] *SecurityDefinition
     accountMap  map[string] *AccountBalance
 }
@@ -67,7 +68,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connUri = uri
     d.clientClose = make(chan int)
     d.listenClose = make(chan int)
-    d.heartbeatUpdate = make(chan proto.Message)
+    d.heartbeatUpdate = make(chan *Heartbeat)
 
     d.securityMap = make(map[int32]*SecurityDefinition)
     d.accountMap = make(map[string]*AccountBalance)
@@ -82,6 +83,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connected = true
     go d._Listen()
     go d._KeepAlive()
+    go d._ReceiveHeartbeat()
     go d.initTrading()
 
     return nil
@@ -118,13 +120,11 @@ func (d *DtcConnection) Disconnect() {
 }
 
 func (d *DtcConnection) _KeepAlive() {
-    var m proto.Message
+    //var m proto.Message
     for {
         select {
-        case m = <-d.heartbeatUpdate:
-            log.Warn(m.String()) // Please fire? Haven't seen one yet...
         case <-d.clientClose:
-            log.Debugf("Heartbeat terminated\n")
+            log.Debugf("Client Heartbeat terminated\n")
             return
         default:
             time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
@@ -132,6 +132,26 @@ func (d *DtcConnection) _KeepAlive() {
                 d._SendHeartbeat()
             } else {
                 d.clientClose <-0
+            }
+        }
+    }
+}
+
+func (d *DtcConnection) _ReceiveHeartbeat() {
+    var m *Heartbeat
+    d.lastHeartbeatResponse = time.Now().Unix()
+    for {
+        select {
+        case m = <-d.heartbeatUpdate:
+            if d.lastHeartbeatResponse < m.CurrentDateTime-30 {
+                log.Warnf("Received late heartbeat, span from last: %v", m.CurrentDateTime-d.lastHeartbeatResponse)
+            }
+            d.lastHeartbeatResponse = m.CurrentDateTime
+        default:
+            //time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Millisecond )
+            time.Sleep( 500 * time.Millisecond )
+            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*2 {
+                log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
             }
         }
     }
