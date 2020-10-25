@@ -34,16 +34,21 @@ type DtcConnection struct {
     heartbeatUpdate chan *Heartbeat
     securityMap map[int32] *SecurityDefinition
     accountMap  map[string] *AccountBalance
+    keepingAlive bool `default: false`
+    listening bool `default: false`
 }
 
 func init() {
 }
 
 func (d *DtcConnection) _Listen() {
+    d.listenClose = make(chan int)
+    d.listening = true
     log.Infof("Client listener started")
     for {
         select {
         case <-d.listenClose:
+            d.listening = false
             log.Infof("Terminating client listener")
             return
         default:
@@ -66,9 +71,6 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.reader = bufio.NewReader(d.conn)
     d.connArgs = c
     d.connUri = uri
-    d.clientClose = make(chan int)
-    d.listenClose = make(chan int)
-    d.heartbeatUpdate = make(chan *Heartbeat)
 
     d.securityMap = make(map[int32]*SecurityDefinition)
     d.accountMap = make(map[string]*AccountBalance)
@@ -92,38 +94,60 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
 * Kinda a test bed for now.
 */
 func (d *DtcConnection) initTrading() (error) {
-    time.Sleep( 3*time.Second )
 
+    time.Sleep( 2*time.Second )
     err := d.LoadAccounts()
-
     if err != nil {
-        return err
+        log.Fatalf("Failed to load accounts with error: %v", err)
     }
 
-    time.Sleep( 3*time.Second )
+    time.Sleep( 2*time.Second )
     err = d.AccountBlanaceRefresh()
+    if err != nil {
+        log.Fatalf("Failed to load account balances with error: %v", err)
+    }
+
+    time.Sleep( 2*time.Second )
+    err = d.HistoricalFills()
+    if err != nil {
+        log.Fatalf("Failed to load historical fills with error: %v", err)
+    }
 
     return err
 }
 
 func (d *DtcConnection) Disconnect() {
-    d.clientClose <-0
+    if d.keepingAlive {
+        d.clientClose <-0
+    }
     if d.connected {
         d._Logoff()
-        d.conn.Close()
-        d.connected = false
-        d.listenClose <-0
-    } else {
-        d.conn.Close()
     }
+
+    d.conn.Close()
     log.Info("Connection closed")
+
+    if d.listening {
+        go d.closeListener()
+        time.Sleep( time.Second )
+    }
+
+    d.connected = false
+    log.Info("Disconnected")
+}
+
+func (d *DtcConnection) closeListener() {
+        d.listening = false
+        d.listenClose <-0
 }
 
 func (d *DtcConnection) _KeepAlive() {
-    //var m proto.Message
+    d.clientClose = make(chan int)
+    d.keepingAlive = true
     for {
         select {
         case <-d.clientClose:
+            d.keepingAlive = false
             log.Debugf("Client Heartbeat terminated\n")
             return
         default:
@@ -139,6 +163,7 @@ func (d *DtcConnection) _KeepAlive() {
 
 func (d *DtcConnection) _ReceiveHeartbeat() {
     var m *Heartbeat
+    d.heartbeatUpdate = make(chan *Heartbeat)
     d.lastHeartbeatResponse = time.Now().Unix()
     for {
         select {
@@ -152,6 +177,13 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
             time.Sleep( 500 * time.Millisecond )
             if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*2 {
                 log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
+                if d.listening {
+                    d.Disconnect()
+                }
+                if !d.listening {
+                    log.Warn("No longer listening, terminating hearbeat listening thread")
+                    return
+                }
             }
         }
     }
@@ -254,6 +286,7 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
+    log.Tracef("Packed message with TypeID: %v with length(%v) and contents: (%x)", mTypeId, length, message)
     return message
 }
 
@@ -270,7 +303,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     if length == 0  {
         log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     } else if log.GetLevel() == log.TraceLevel {
-        //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)
@@ -344,8 +377,3 @@ func dtc_bin_encoder( m interface{} ) ([]byte) {
     }
     return nil
 }
-
-func describe(i interface{}) {
-    fmt.Printf("(%v, %T)\n", i, i)
-}
-

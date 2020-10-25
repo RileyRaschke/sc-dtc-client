@@ -3,71 +3,80 @@ package dtc
 import (
     log "github.com/sirupsen/logrus"
     "fmt"
+    "errors"
     "reflect"
     "github.com/golang/protobuf/proto"
     "google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
 )
 
-func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) {
+func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) error {
+    if msg == nil {
+        mTypeStr := DTCMessageType_name[mTypeId]
+        log.Errorf("Received %v with empty body", mTypeStr)
+        return errors.New("Router received null message.")
+    }
     switch( DTCMessageType(mTypeId) ){
     case DTCMessageType_MESSAGE_TYPE_UNSET:
         log.Trace("Received MESSAGE_TYPE_UNSET")
-        return
+        return nil
     // Authentication and connection monitoring
     case DTCMessageType_LOGON_REQUEST:
-        return // server action
+        return nil // server action
     case DTCMessageType_LOGON_RESPONSE:
-        return // handled at logon
+        return nil // handled at logon
     case DTCMessageType_HEARTBEAT:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
         d.heartbeatUpdate <-msg.(*Heartbeat)
-        return
+        return nil
     // Account list
     case DTCMessageType_TRADE_ACCOUNT_RESPONSE:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_TRADE_ACCOUNTS_REQUEST:
-        return // server action
+        return nil // server action
     // Account balance
     case DTCMessageType_ACCOUNT_BALANCE_UPDATE:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
         fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
-        return
+        return nil
     case DTCMessageType_ACCOUNT_BALANCE_REQUEST:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_ACCOUNT_BALANCE_REJECT:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_REJECT:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_COMPLETE:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REQUEST:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        return
+        return nil
     case DTCMessageType_LOGOFF:
-        return // server action
+        log.Warn("Received logoff request from server!")
+        //d.connected = false
+        d.Disconnect()
+        return nil // server action
     case DTCMessageType_ENCODING_REQUEST:
-        return // server action
+        return nil // server action
     case DTCMessageType_ENCODING_RESPONSE:
-        return // handled upon request
+        return nil // handled upon request
     case DTCMessageType_SECURITY_DEFINITION_RESPONSE:
         //symbolAdd <-msg.(SecurityDefinitionResponse)
         d.addSecurity( msg.(*SecurityDefinition) )
-        return
+        return nil
     // Market data
     case DTCMessageType_MARKET_DATA_REQUEST:
         fallthrough
@@ -145,7 +154,7 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         fallthrough
     case DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
         //fallthrough
-        return
+        return nil
     case DTCMessageType_TRADING_SYMBOL_STATUS:
         fallthrough
     // Order entry and modification
@@ -248,12 +257,9 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
             log.Debug("No message type determined!\n")
             describe(msg)
         }
-        if msg != nil {
-            //fmt.Println(msg.String())
-            log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-            fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
-        } else {
-            log.Errorf("Received %v with empty body", mTypeStr)
-        }
+        //fmt.Println(msg.String())
+        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
+        fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
     }
+    return nil
 }

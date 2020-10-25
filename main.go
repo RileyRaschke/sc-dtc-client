@@ -52,11 +52,11 @@ func main() {
             return
         default:
             if client.Connected() {
-                time.Sleep( 1 * time.Second )
+                time.Sleep( time.Second )
             } else {
                 log.Printf("Client unexpectedly disconnected from server\n")
                 // TODO: Attempt reconnect? Client connection will need timeout function..
-                time.Sleep( 1 * time.Second )
+                time.Sleep( time.Second )
                 return
             }
         }
@@ -68,7 +68,7 @@ func main() {
 func CatchInterupt(){
     go func() {
         i := <-signals
-        log.Printf("Received signal: (%v), exiting...\n", i)
+        log.Printf("Received signal: %v, exiting...\n", i)
         quit <- 0
     }()
 }
