@@ -64,10 +64,13 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     log.Infof("Connecting: %s@%s:%s\n", c.Username, c.Host, c.Port )
     uri := net.JoinHostPort(c.Host, c.Port)
     dialer := net.Dialer{Timeout: 4*time.Second}
+
     conn, err := dialer.Dial("tcp", uri)
+
     if err != nil {
         if c.Reconnect && d.backOffRate > 1 {
             log.Warnf("Failed to connect to DTC server: %v\n", err)
+            return err
         } else {
             log.Fatalf("Failed to connect to DTC server: %v\n", err)
             os.Exit(1)
@@ -95,7 +98,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     go d.keepAlive()
     if d.backOffRate < 2 {
         d.backOffRate = 1
-        log.Warn("Starting hearbeat listener...")
+        log.Trace("Starting hearbeat listener...")
         go d._ReceiveHeartbeat()
     }
     go d.initTrading()
