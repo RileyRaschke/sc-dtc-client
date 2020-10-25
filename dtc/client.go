@@ -15,6 +15,7 @@ type ConnectArgs struct {
     HistPort string
     Username string
     Password string
+    Reconnect bool
 }
 
 func init() {
@@ -39,6 +40,13 @@ func (c *DtcClient) Connected() (bool){
         return c.dtcConn.connected
     }
     return false
+}
+func (c *DtcClient) Terminated() (bool){
+    return c.dtcConn.terminated
+}
+func (c *DtcClient) Terminate() {
+    c.dtcConn.connArgs.Reconnect = false
+    c.Disconnect()
 }
 func (c *DtcClient) Disconnect() {
     if c.dtcConn != nil {

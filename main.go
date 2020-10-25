@@ -34,6 +34,7 @@ func main() {
         viper.GetString("dtc.HistPort"),
         viper.GetString("dtc.Username"),
         viper.GetString("dtc.Password"),
+        viper.GetBool("dtc.Reconnect"),
     }
 
     err := client.Connect( args )
@@ -47,11 +48,11 @@ func main() {
         select {
         case <-quit:
             if client.Connected() {
-                client.Disconnect()
+                client.Terminate()
             }
             return
         default:
-            if client.Connected() {
+            if !client.Terminated() {
                 time.Sleep( time.Second )
             } else {
                 log.Printf("Client unexpectedly disconnected from server\n")

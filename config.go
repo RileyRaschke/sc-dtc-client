@@ -34,6 +34,7 @@ func init() {
     viper.SetDefault("dtc.HistPort", "11098")
     viper.SetDefault("dtc.Username", "")
     viper.SetDefault("dtc.Password", "")
+    viper.SetDefault("dtc.Reconnect", false)
     viper.SetDefault("log.level", "TRACE")
 
     getopt.SetUsage(func() { usage() })

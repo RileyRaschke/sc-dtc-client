@@ -66,8 +66,10 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         return nil
     case DTCMessageType_LOGOFF:
         log.Warn("Received logoff request from server!")
-        //d.connected = false
-        d.Disconnect()
+        d.loggedOn = false
+        if ! d.connArgs.Reconnect {
+            d.Disconnect()
+        }
         return nil // server action
     case DTCMessageType_ENCODING_REQUEST:
         return nil // server action

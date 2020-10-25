@@ -25,7 +25,8 @@ type DtcConnection struct {
     connArgs ConnectArgs
     connUri string
     conn  net.Conn
-    connected bool `default: false`
+    connected bool
+    terminated bool
     reader io.Reader
     requestId int32
     clientClose chan int
@@ -34,8 +35,10 @@ type DtcConnection struct {
     heartbeatUpdate chan *Heartbeat
     securityMap map[int32] *SecurityDefinition
     accountMap  map[string] *AccountBalance
-    keepingAlive bool `default: false`
-    listening bool `default: false`
+    keepingAlive bool
+    listening bool
+    loggedOn bool
+    backOffRate int
 }
 
 func init() {
@@ -49,7 +52,7 @@ func (d *DtcConnection) _Listen() {
         select {
         case <-d.listenClose:
             d.listening = false
-            log.Infof("Terminating client listener")
+            log.Warn("Closing client listener")
             return
         default:
             d._RouteMessage( d._NextMessage() )
@@ -63,8 +66,12 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     dialer := net.Dialer{Timeout: 4*time.Second}
     conn, err := dialer.Dial("tcp", uri)
     if err != nil {
-        log.Fatalf("Failed to connect to DTC server: %v\n", err)
-        os.Exit(1)
+        if c.Reconnect && d.backOffRate > 1 {
+            log.Warnf("Failed to connect to DTC server: %v\n", err)
+        } else {
+            log.Fatalf("Failed to connect to DTC server: %v\n", err)
+            os.Exit(1)
+        }
     }
 
     d.conn = conn
@@ -82,10 +89,15 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
         d.Disconnect()
         return err
     }
+    d.loggedOn = true
     d.connected = true
     go d._Listen()
-    go d._KeepAlive()
-    go d._ReceiveHeartbeat()
+    go d.keepAlive()
+    if d.backOffRate < 2 {
+        d.backOffRate = 1
+        log.Warn("Starting hearbeat listener...")
+        go d._ReceiveHeartbeat()
+    }
     go d.initTrading()
 
     return nil
@@ -120,12 +132,14 @@ func (d *DtcConnection) Disconnect() {
     if d.keepingAlive {
         d.clientClose <-0
     }
-    if d.connected {
+    if d.loggedOn {
         d._Logoff()
     }
 
-    d.conn.Close()
-    log.Info("Connection closed")
+    if d.connected {
+        d.conn.Close()
+        log.Info("Connection closed")
+    }
 
     if d.listening {
         go d.closeListener()
@@ -133,6 +147,9 @@ func (d *DtcConnection) Disconnect() {
     }
 
     d.connected = false
+    if !d.connArgs.Reconnect {
+        d.terminated = true
+    }
     log.Info("Disconnected")
 }
 
@@ -141,14 +158,14 @@ func (d *DtcConnection) closeListener() {
         d.listenClose <-0
 }
 
-func (d *DtcConnection) _KeepAlive() {
+func (d *DtcConnection) keepAlive() {
     d.clientClose = make(chan int)
     d.keepingAlive = true
     for {
         select {
         case <-d.clientClose:
             d.keepingAlive = false
-            log.Debugf("Client Heartbeat terminated\n")
+            log.Debugf("Client Heartbeat closed\n")
             return
         default:
             time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
@@ -174,15 +191,19 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
             d.lastHeartbeatResponse = m.CurrentDateTime
         default:
             //time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Millisecond )
-            time.Sleep( 500 * time.Millisecond )
+            time.Sleep( time.Duration(d.backOffRate) * 500 * time.Millisecond )
             if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*2 {
                 log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
-                if d.listening {
+                if d.listening && !d.connArgs.Reconnect {
                     d.Disconnect()
                 }
-                if !d.listening {
-                    log.Warn("No longer listening, terminating hearbeat listening thread")
+                if !d.listening && !d.connArgs.Reconnect {
+                    log.Warn("No longer listening, closing hearbeat listening thread")
                     return
+                } else {
+                    log.Warn("Attempting reconnect...")
+                    d.backOffRate = d.backOffRate * 2
+                    d.Connect( d.connArgs )
                 }
             }
         }
@@ -229,6 +250,7 @@ func (d *DtcConnection) _Logon() error {
         log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
         return errors.New("Logon Failure")
     }
+    d.lastHeartbeatResponse = time.Now().Unix()
     log.Debugf("Received %v result: %v", DTCMessageType_name[mTypeId], logonResponse.ResultText)
     fmt.Println( protojson.Format(&logonResponse) )
     return nil
@@ -286,7 +308,7 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
-    log.Tracef("Packed message with TypeID: %v with length(%v) and contents: (%x)", mTypeId, length, message)
+    log.Tracef("Packed message with TypeID: %v with length(%v) and contents: 0x%x", mTypeId, length, message)
     return message
 }
 
