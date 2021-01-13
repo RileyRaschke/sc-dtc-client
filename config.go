@@ -67,11 +67,12 @@ func configWrite(){
 
 Alternatively, set the following environment variables:
 
-export ` + envPrefix + `_HOST='127.0.0.1'
-export ` + envPrefix + `_PORT='11099'
-export ` + envPrefix + `_HISTPORT='11098'
-export ` + envPrefix + `_USERNAME=''
-export ` + envPrefix + `_PASSWORD=''
+export ` + envPrefix + `_DTC_HOST='127.0.0.1'
+export ` + envPrefix + `_DTC_PORT='11099'
+export ` + envPrefix + `_DTC_HISTPORT='11098'
+export ` + envPrefix + `_DTC_USERNAME=''
+export ` + envPrefix + `_DTC_PASSWORD=''
+export ` + envPrefix + `_LOG_LEVEL='TRACE'
 `)
     os.Exit(0)
 }

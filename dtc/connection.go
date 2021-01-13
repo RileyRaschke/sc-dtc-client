@@ -17,6 +17,8 @@ import (
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
     "github.com/iancoleman/strcase"
+
+    //"github.com/RileyR387/sc-dtc-client/marketdata"
 )
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 5
@@ -33,7 +35,7 @@ type DtcConnection struct {
     listenClose chan int
     lastHeartbeatResponse int64
     heartbeatUpdate chan *Heartbeat
-    securityMap map[int32] *SecurityDefinition
+    securityMap map[int32] *Security
     accountMap  map[string] *AccountBalance
     keepingAlive bool
     listening bool
@@ -82,7 +84,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connArgs = c
     d.connUri = uri
 
-    d.securityMap = make(map[int32]*SecurityDefinition)
+    d.securityMap = make(map[int32]*Security)
     d.accountMap = make(map[string]*AccountBalance)
 
     d._SetEncoding()
@@ -101,12 +103,12 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
         log.Trace("Starting hearbeat listener...")
         go d._ReceiveHeartbeat()
     }
-    go d.initTrading()
+    //go d.initTrading()
 
     return nil
 }
 /**
-* Kinda a test bed for now.
+* Test bed for now.
 */
 func (d *DtcConnection) initTrading() (error) {
 
@@ -328,7 +330,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     if length == 0  {
         log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     } else if log.GetLevel() == log.TraceLevel {
-        log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)

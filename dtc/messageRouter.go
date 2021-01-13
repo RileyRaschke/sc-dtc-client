@@ -2,7 +2,7 @@ package dtc
 
 import (
     log "github.com/sirupsen/logrus"
-    "fmt"
+    //"fmt"
     "errors"
     "reflect"
     "github.com/golang/protobuf/proto"
@@ -37,8 +37,11 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         return nil // server action
     // Account balance
     case DTCMessageType_ACCOUNT_BALANCE_UPDATE:
-        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
+        log.Debugf("Received %v(%v)\n%v",
+            DTCMessageType_name[mTypeId],
+            mTypeId,
+            protojson.Format(msg.(protoreflect.ProtoMessage)),
+        )
         return nil
     case DTCMessageType_ACCOUNT_BALANCE_REQUEST:
         log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
@@ -156,6 +159,8 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         fallthrough
     case DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
         //fallthrough
+        // TODO: Create subscriptionRouter channel for subscriber write
+        //d.subscriptionRouter <-msg
         return nil
     case DTCMessageType_TRADING_SYMBOL_STATUS:
         fallthrough
@@ -256,12 +261,15 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     default:
         mTypeStr := DTCMessageType_name[mTypeId]
         if mTypeStr == "" {
-            log.Debug("No message type determined!\n")
+            log.Error("No message type determined!\n")
             describe(msg)
+        } else {
+            log.Debugf("Received %v(%v)\n%v",
+                DTCMessageType_name[mTypeId],
+                mTypeId,
+                protojson.Format(msg.(protoreflect.ProtoMessage)),
+            )
         }
-        //fmt.Println(msg.String())
-        log.Tracef("Received %v(%v)", DTCMessageType_name[mTypeId], mTypeId)
-        fmt.Println( protojson.Format(msg.(protoreflect.ProtoMessage)) )
     }
     return nil
 }
