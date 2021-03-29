@@ -18,7 +18,7 @@ type Security struct {
 }
 
 func (d *DtcConnection) addSecurity(def *SecurityDefinitionResponse) {
-    log.Infof("Added security %v from exchange %v as %v", def.ExchangeSymbol, def.Exchange, def.Symbol)
+    log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
     d.securityMap[def.RequestID] = &Security{Definition: def}
 }
 

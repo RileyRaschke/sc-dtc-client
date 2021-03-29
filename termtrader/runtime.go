@@ -2,16 +2,19 @@ package termtrader
 
 import (
     "fmt"
-	tm "github.com/buger/goterm"
-	"time"
+    log "github.com/sirupsen/logrus"
+    tm "github.com/buger/goterm"
+    "time"
     "github.com/golang/protobuf/proto"
     "google.golang.org/protobuf/encoding/protojson"
     "google.golang.org/protobuf/reflect/protoreflect"
+    //"github.com/RileyR387/sc-dtc-client/dtc"
 )
 
 type TermTraderPlugin struct {
     ReceiveData chan *proto.Message
     lastMsgJson string
+    //securityMap *map[int32] *dtc.Security
 }
 
 func New() *TermTraderPlugin {
@@ -25,11 +28,12 @@ func New() *TermTraderPlugin {
 
 func (x *TermTraderPlugin) Run() {
     fmt.Println("Running TermTraderPlugin")
+    log.Info(fmt.Sprintf("Running TermTraderPlugin"))
     var msg *proto.Message
     for {
         select {
         case msg = <-x.ReceiveData:
-            //fmt.Println( protojson.Format((*msg).(protoreflect.ProtoMessage)))
+            //log.Debug( protojson.Format((*msg).(protoreflect.ProtoMessage)) )
             x.lastMsgJson = protojson.Format((*msg).(protoreflect.ProtoMessage))
         }
     }
@@ -38,7 +42,7 @@ func (x *TermTraderPlugin) Run() {
 func (x *TermTraderPlugin) Draw() {
     // By moving cursor to top-left position we ensure that console output
     // will be overwritten each time, instead of adding new.
-	tm.Clear() // Clear current screen
+    tm.Clear() // Clear current screen
     for {
         tm.MoveCursor(1, 1)
 
