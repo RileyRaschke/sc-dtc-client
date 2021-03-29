@@ -3,6 +3,7 @@ module github.com/RileyR387/sc-dtc-client
 go 1.15
 
 require (
+	github.com/buger/goterm v0.0.0-20200322175922-2f3e71b85129 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/iancoleman/strcase v0.1.2
 	github.com/pborman/getopt/v2 v2.1.0

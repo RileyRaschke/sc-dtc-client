@@ -19,9 +19,10 @@ import (
     "github.com/iancoleman/strcase"
 
     //"github.com/RileyR387/sc-dtc-client/marketdata"
+    ttr "github.com/RileyR387/sc-dtc-client/termtrader"
 )
 
-const DTC_CLIENT_HEARTBEAT_SECONDS = 5
+const DTC_CLIENT_HEARTBEAT_SECONDS = 10
 
 type DtcConnection struct {
     connArgs ConnectArgs
@@ -35,6 +36,8 @@ type DtcConnection struct {
     listenClose chan int
     lastHeartbeatResponse int64
     heartbeatUpdate chan *Heartbeat
+    marketData chan *proto.Message
+    subscribers []*ttr.TermTraderPlugin
     securityMap map[int32] *Security
     accountMap  map[string] *AccountBalance
     keepingAlive bool
@@ -103,6 +106,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
         log.Trace("Starting hearbeat listener...")
         go d._ReceiveHeartbeat()
     }
+    go d.startSubscriptionRouter()
     //go d.initTrading()
 
     return nil
@@ -178,6 +182,23 @@ func (d *DtcConnection) keepAlive() {
                 d._SendHeartbeat()
             } else {
                 d.clientClose <-0
+            }
+        }
+    }
+}
+
+func (d *DtcConnection) startSubscriptionRouter(){
+    var msg *proto.Message
+    d.marketData = make(chan *proto.Message)
+    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New() }
+
+    for {
+        select {
+        case msg = <-d.marketData:
+            d.lastHeartbeatResponse = time.Now().Unix()
+            // Distribute Market Data
+            for _, subscriber := range d.subscribers {
+                subscriber.ReceiveData <-msg
             }
         }
     }
@@ -313,7 +334,7 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
-    log.Tracef("Packed message with TypeID: %v with length(%v) and contents: 0x%x", mTypeId, length, message)
+    log.Tracef("Packed message with TypeID: %v(%v) with length(%v) and contents: 0x%x", mTypeId, DTCMessageType_name[mTypeId], length, message)
     return message
 }
 

@@ -160,7 +160,7 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
         //fallthrough
         // TODO: Create subscriptionRouter channel for subscriber write
-        //d.subscriptionRouter <-msg
+        d.marketData <- &msg
         return nil
     case DTCMessageType_TRADING_SYMBOL_STATUS:
         fallthrough
