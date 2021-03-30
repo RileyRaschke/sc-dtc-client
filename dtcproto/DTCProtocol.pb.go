@@ -4,7 +4,7 @@
 // 	protoc        v3.13.0
 // source: DTCProtocol.proto
 
-package dtc
+package dtcproto
 
 import (
 	proto "github.com/golang/protobuf/proto"

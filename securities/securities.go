@@ -1,25 +1,20 @@
-package dtc
+package securities
 
 import (
-    log "github.com/sirupsen/logrus"
+    //log "github.com/sirupsen/logrus"
     //"reflect"
     //"github.com/golang/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoreflect"
     //"google.golang.org/protobuf/encoding/protojson"
-
     //"github.com/RileyR387/sc-dtc-client/marketdata"
+    "github.com/RileyR387/sc-dtc-client/dtcproto"
 )
 
 type Security struct {
-    Definition *SecurityDefinition
+    Definition *dtcproto.SecurityDefinitionResponse
     BidDepth map[int] int
     AskDepth map[int] int
     Market float64
-}
-
-func (d *DtcConnection) addSecurity(def *SecurityDefinitionResponse) {
-    log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
-    d.securityMap[def.RequestID] = &Security{Definition: def}
 }
 
 func (s *Security) AddData() {

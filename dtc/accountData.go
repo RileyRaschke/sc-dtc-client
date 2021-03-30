@@ -1,18 +1,19 @@
 package dtc
 
 import (
+    "fmt"
     "errors"
     log "github.com/sirupsen/logrus"
     "github.com/golang/protobuf/proto"
-    "fmt"
     "google.golang.org/protobuf/encoding/protojson"
+    "github.com/RileyR387/sc-dtc-client/dtcproto"
 )
 
 /**
 * Should trigger repsonse handled by DtcConnection._Listen() -> _RouteMessage() but seeing no bytes on wire...
 */
 func (d *DtcConnection) LoadAccounts() error {
-    tradeActReq := TradeAccountsRequest{
+    tradeActReq := dtcproto.TradeAccountsRequest{
         RequestID: d.nextRequestID(),
     }
     //describe( tradeActReq.ProtoReflect().Descriptor().FullName() )
@@ -26,8 +27,8 @@ func (d *DtcConnection) LoadAccounts() error {
     //describe( msg )
 
     log.Debug("Sending TRADE_ACCOUNTS_REQUEST")
-    //_, err = d.conn.Write( PackMessage( msg, DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
+    //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
     fmt.Println( protojson.Format(&tradeActReq) )
     return err
 }
@@ -36,7 +37,7 @@ func (d *DtcConnection) LoadAccounts() error {
 * Should trigger repsonse handled by DtcConnection._Listen() -> _RouteMessage() but seeing no bytes on wire...
 */
 func (d *DtcConnection) AccountBlanaceRefresh() error {
-    balReq := AccountBalanceRequest{
+    balReq := dtcproto.AccountBalanceRequest{
         RequestID: d.nextRequestID(),
     }
     //describe( balReq.ProtoReflect().Descriptor().FullName() )
@@ -49,14 +50,14 @@ func (d *DtcConnection) AccountBlanaceRefresh() error {
     //describe( msg )
 
     log.Debug("Sending ACCOUNT_BALANCE_REQUEST")
-    //_, err = d.conn.Write( PackMessage( msg, DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
+    //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
     fmt.Println( protojson.Format(&balReq) )
     return err
 }
 
 func (d *DtcConnection) HistoricalFills() error {
-    fillHistReq := HistoricalOrderFillsRequest{
+    fillHistReq := dtcproto.HistoricalOrderFillsRequest{
         RequestID: d.nextRequestID(),
         ServerOrderID: "",
         TradeAccount: "111151",
@@ -68,8 +69,8 @@ func (d *DtcConnection) HistoricalFills() error {
         return errors.New("Failed to marshal HISTORICAL_ORDER_FILLS_REQUEST, check proto version?")
     }
     log.Debug("Sending HISTORICAL_ORDER_FILLS_REQUEST")
-    //_, err = d.conn.Write( PackMessage( msg, DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
+    //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
     fmt.Println( protojson.Format(&fillHistReq) )
     return err
 }

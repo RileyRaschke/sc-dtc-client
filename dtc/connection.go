@@ -18,7 +18,9 @@ import (
     "strings"
     "github.com/iancoleman/strcase"
 
+    "github.com/RileyR387/sc-dtc-client/dtcproto"
     //"github.com/RileyR387/sc-dtc-client/marketdata"
+    "github.com/RileyR387/sc-dtc-client/securities"
     ttr "github.com/RileyR387/sc-dtc-client/termtrader"
 )
 
@@ -38,7 +40,7 @@ type DtcConnection struct {
     heartbeatUpdate chan *Heartbeat
     marketData chan *proto.Message
     subscribers []*ttr.TermTraderPlugin
-    securityMap map[int32] *Security
+    securityMap map[int32] *securities.Security
     accountMap  map[string] *AccountBalance
     keepingAlive bool
     listening bool
@@ -87,7 +89,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connArgs = c
     d.connUri = uri
 
-    d.securityMap = make(map[int32]*Security)
+    d.securityMap = make(map[int32]*securities.Security)
     d.accountMap = make(map[string]*AccountBalance)
 
     d._SetEncoding()
@@ -135,6 +137,11 @@ func (d *DtcConnection) initTrading() (error) {
     }
 
     return err
+}
+
+func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
+    log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
+    d.securityMap[def.RequestID] = &securities.Security{Definition: def}
 }
 
 func (d *DtcConnection) Disconnect() {
@@ -190,7 +197,7 @@ func (d *DtcConnection) keepAlive() {
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg *proto.Message
     d.marketData = make(chan *proto.Message)
-    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New() }
+    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap) }
 
     for {
         select {
@@ -237,16 +244,16 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
 }
 
 func (d *DtcConnection) _Logon() error {
-    logonRequest := LogonRequest{
+    logonRequest := dtcproto.LogonRequest{
         Username: d.connArgs.Username,
         Password: d.connArgs.Password,
         Integer_1: 2,
-        //TradeMode: TradeModeEnum_TRADE_MODE_UNSET,
-        TradeMode: TradeModeEnum_TRADE_MODE_LIVE,
-        //TradeMode: TradeModeEnum_TRADE_MODE_SIMULATED,
+        //TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_UNSET,
+        TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_LIVE,
+        //TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_SIMULATED,
         HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
         ClientName: "go-dtc",
-        ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
+        ProtocolVersion: dtcproto.DTCVersion_value["CURRENT_VERSION"],
     }
     //describe( logonRequest.ProtoReflect().Descriptor().FullName() )
     fmt.Println( protojson.Format(&logonRequest) )
@@ -258,15 +265,15 @@ func (d *DtcConnection) _Logon() error {
     }
 
     log.Debug("Sending LOGON_REQUEST")
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGON_REQUEST"] ))
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["LOGON_REQUEST"] ))
 
     resp, mTypeId := d._GetMessage()
 
-    logonResponse := LogonResponse{}
+    logonResponse := dtcproto.LogonResponse{}
     if err := proto.Unmarshal(resp, &logonResponse); err != nil {
         log.Fatalln("Failed to parse LogonResponse:", err)
     }
-    if logonResponse.Result != LogonStatusEnum_LOGON_SUCCESS {
+    if logonResponse.Result != dtcproto.LogonStatusEnum_LOGON_SUCCESS {
         /*
         log.WithFields(log.Fields{
             "result": logonResponse.Result,
@@ -277,13 +284,13 @@ func (d *DtcConnection) _Logon() error {
         return errors.New("Logon Failure")
     }
     d.lastHeartbeatResponse = time.Now().Unix()
-    log.Debugf("Received %v result: %v", DTCMessageType_name[mTypeId], logonResponse.ResultText)
+    log.Debugf("Received %v result: %v", dtcproto.DTCMessageType_name[mTypeId], logonResponse.ResultText)
     fmt.Println( protojson.Format(&logonResponse) )
     return nil
 }
 
 func (d *DtcConnection) _Logoff() {
-    logoff := Logoff{
+    logoff := dtcproto.Logoff{
         Reason: "Done",
         DoNotReconnect: 1,
     }
@@ -294,21 +301,21 @@ func (d *DtcConnection) _Logoff() {
     }
 
     log.Debug("Sending LOGOFF")
-    d.conn.Write( PackMessage( msg, DTCMessageType_value["LOGOFF"] ))
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["LOGOFF"] ))
     log.Trace("Logoff request sent")
 }
 
 func (d *DtcConnection) _SetEncoding() {
-    encodingReq := EncodingRequest{
-        ProtocolVersion: DTCVersion_value["CURRENT_VERSION"],
-        Encoding: EncodingEnum_PROTOCOL_BUFFERS,
+    encodingReq := dtcproto.EncodingRequest{
+        ProtocolVersion: dtcproto.DTCVersion_value["CURRENT_VERSION"],
+        Encoding: dtcproto.EncodingEnum_PROTOCOL_BUFFERS,
         ProtocolType: "DTC",
     }
     msg := dtc_bin_encoder( encodingReq )
     log.Debug("Sending ENCODING_REQUEST")
-    d.conn.Write( PackMessage(msg, DTCMessageType_value["ENCODING_REQUEST"] ))
+    d.conn.Write( PackMessage(msg, dtcproto.DTCMessageType_value["ENCODING_REQUEST"] ))
     respBin, mTypeId := d._GetMessage()
-    log.Debugf("Received %v(%v) with bytes %v", DTCMessageType_name[mTypeId], mTypeId, respBin )
+    log.Debugf("Received %v(%v) with bytes %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, respBin )
     /**
      * TODO: Handle binary encoding response for log purposes
     resp := d._GetMessage()
@@ -325,7 +332,7 @@ func (d *DtcConnection) _SendHeartbeat() {
         log.Fatalf("Failed to marshal Heartbeat message: %v\n", err)
         os.Exit(1)
     }
-    d.conn.Write( PackMessage(msg, DTCMessageType_value["HEARTBEAT"] ))
+    d.conn.Write( PackMessage(msg, dtcproto.DTCMessageType_value["HEARTBEAT"] ))
 }
 
 func PackMessage(msg []byte, mTypeId int32) ([]byte){
@@ -334,7 +341,7 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
-    log.Tracef("Packed message with TypeID: %v(%v) with length(%v) and contents: 0x%x", mTypeId, DTCMessageType_name[mTypeId], length, message)
+    log.Tracef("Packed message with TypeID: %v (%v) with length %v and contents: 0x%x", mTypeId, dtcproto.DTCMessageType_name[mTypeId], length, message)
     return message
 }
 
@@ -349,9 +356,9 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
     length, mTypeId := _ParseHeaderBytes(d.reader)
 
     if length == 0  {
-        log.Warnf("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        log.Warnf("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length )
     } else if log.GetLevel() == log.TraceLevel {
-        //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
+        //log.Tracef("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length )
     }
 
     resp := make([]byte, length)
@@ -378,8 +385,8 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
         }
     }
 
-    //log.Tracef("Received %v(%v) with byte length %v", DTCMessageType_name[mTypeId], mTypeId, length )
-    if DTCMessageType(mTypeId) == DTCMessageType_ENCODING_RESPONSE {
+    //log.Tracef("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length )
+    if dtcproto.DTCMessageType(mTypeId) == dtcproto.DTCMessageType_ENCODING_RESPONSE {
         // binary encoding... nbd for now
     }
     return resp, mTypeId
@@ -387,7 +394,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 
 func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message, reflect.Type) {
     var msg proto.Message
-    pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel( strings.ToLower( DTCMessageType_name[mTypeId] ) ) )
+    pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel( strings.ToLower( dtcproto.DTCMessageType_name[mTypeId] ) ) )
     //if pbtype != nil && err == nil {
     if pbtype != nil {
         msg = reflect.New(pbtype.Elem()).Interface().(proto.Message)
@@ -413,7 +420,7 @@ func _ParseHeaderBytes(r io.Reader) (uint16, int32){
 
 func dtc_bin_encoder( m interface{} ) ([]byte) {
     switch v := m.(type) {
-        case EncodingRequest:
+        case dtcproto.EncodingRequest:
             bMsg := make([]byte, 8)
             binary.LittleEndian.PutUint32(bMsg[0:4], uint32(v.ProtocolVersion))
             binary.LittleEndian.PutUint32(bMsg[4:8], uint32(v.Encoding))

@@ -8,19 +8,20 @@ import (
     "github.com/golang/protobuf/proto"
     "google.golang.org/protobuf/encoding/protojson"
     "google.golang.org/protobuf/reflect/protoreflect"
-    //"github.com/RileyR387/sc-dtc-client/dtc"
+    "github.com/RileyR387/sc-dtc-client/securities"
 )
 
 type TermTraderPlugin struct {
     ReceiveData chan *proto.Message
     lastMsgJson string
-    //securityMap *map[int32] *dtc.Security
+    securityMap *map[int32] *securities.Security
 }
 
-func New() *TermTraderPlugin {
+func New(sm *map[int32] *securities.Security) *TermTraderPlugin {
     x := &TermTraderPlugin{
         make(chan *proto.Message),
         "",
+        sm,
     }
     go x.Run()
     return x
