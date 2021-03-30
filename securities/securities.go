@@ -1,6 +1,7 @@
 package securities
 
 import (
+    "fmt"
     log "github.com/sirupsen/logrus"
     //"reflect"
     "github.com/golang/protobuf/proto"
@@ -19,7 +20,13 @@ type Security struct {
     Definition *dtcproto.SecurityDefinitionResponse
     BidDepth map[int] int
     AskDepth map[int] int
+    Bid float32
+    Ask float32
     Market float64
+}
+
+func (s *Security) String() string {
+    return fmt.Sprintf("%15v %10v %10v %v", s.Definition.Symbol, s.Bid, s.Ask, s.Definition)
 }
 
 func (s *Security) AddData( md MarketDataUpdate ) {
@@ -35,14 +42,19 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         log.Error("Got some market data reject: FIXME")
         return
     case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT_INT:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE:
+        //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_COMPACT:
+        //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_INT:
+        //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_LAST_TRADE_SNAPSHOT:
         return
@@ -56,6 +68,10 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_COMPACT:
+        //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
+        mdudac := md.Msg.(*dtcproto.MarketDataUpdateBidAskCompact)
+        s.Bid = mdudac.BidPrice
+        s.Ask = mdudac.AskPrice
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_NO_TIMESTAMP:
         return

@@ -2,6 +2,7 @@ package termtrader
 
 import (
     "fmt"
+    "sort"
     //"strconv"
     "encoding/json"
     log "github.com/sirupsen/logrus"
@@ -43,26 +44,44 @@ func (x *TermTraderPlugin) Run() {
             dmm := mktDataI.(map[string]interface{})
 
             if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
-                symbolDesc := (*x.securityMap)[symID].Definition.Symbol
-                log.Tracef("Update for: %v", symbolDesc)
+                //symbolDesc := (*x.securityMap)[symID].Definition.Symbol
+                //log.Tracef("Update for: %v", symbolDesc)
                 (*x.securityMap)[symID].AddData(mktData)
+                x.Draw()
             }
         }
     }
 }
 
 func (x *TermTraderPlugin) Draw() {
+    nameMap := map[string]int32{}
+    syms := make([]string, 0, len(*x.securityMap))
+    for k, v := range *x.securityMap {
+        nameMap[v.Definition.Symbol] = k
+        syms = append( syms, v.Definition.Symbol )
+    }
+    sort.Strings(syms)
+
     // By moving cursor to top-left position we ensure that console output
     // will be overwritten each time, instead of adding new.
     tm.Clear() // Clear current screen
-    for {
-        tm.MoveCursor(1, 1)
+    //for {
+    tm.MoveCursor(1, 1)
 
-        tm.Println("Current Time:", time.Now().Format(time.RFC1123))
+    tm.Println("Current Time:", time.Now().Format(time.RFC1123))
+    tm.Println("")
 
-        tm.Flush() // Call it every time at the end of rendering
-
-        time.Sleep(time.Second)
+    fmtStr := " %-15v %10v %10v"
+    tm.Println( fmt.Sprintf(fmtStr, "Symbol", "Bid", "Ask") )
+    for _, symKey := range syms {
+        sec := (*x.securityMap)[nameMap[symKey]]
+        tm.Println( fmt.Sprintf(fmtStr, sec.Definition.Symbol, sec.Bid, sec.Ask) )
+        //tm.Println( fmt.Sprintf( "%v", .String() ) )
     }
+
+
+    tm.Flush() // Call it every time at the end of rendering
+
+    //}
 }
 
