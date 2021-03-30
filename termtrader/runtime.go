@@ -36,23 +36,17 @@ func (x *TermTraderPlugin) Run() {
     for {
         select {
         case mktData = <-x.ReceiveData:
+            var mktDataI interface{}
             // TODO: I shouldn't need to go to string before a map right?
-            var msgData interface{}
             x.lastMsgJson = protojson.Format((mktData.Msg).(protoreflect.ProtoMessage))
-            err := json.Unmarshal([]byte(x.lastMsgJson), &msgData)
-            //err := protojson.Unmarshal((*mktData.msg).(protoreflect.ProtoMessage), &msgData)
-            //log.Trace(x.lastMsgJson)
-            //if err != nil {
-            //    log.Error("Error unmarshalling json: %v", err)
-            //}
-            //dmm := ((*mktData).(protoreflect.ProtoMessage)).(map[string]interface{})
-            dmm := msgData.(map[string]interface{})
+            err := json.Unmarshal([]byte(x.lastMsgJson), &mktDataI)
+            dmm := mktDataI.(map[string]interface{})
+
             if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
                 symbolDesc := (*x.securityMap)[symID].Definition.Symbol
-                log.Infof("Update for: %v", symbolDesc)
+                log.Tracef("Update for: %v", symbolDesc)
+                (*x.securityMap)[symID].AddData(mktData)
             }
-            //#log.info( (*mktData).(
-            //if (*mktData).( // FIXME
         }
     }
 }

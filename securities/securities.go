@@ -1,11 +1,11 @@
 package securities
 
 import (
-    //log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
     //"reflect"
     "github.com/golang/protobuf/proto"
-    //"google.golang.org/protobuf/reflect/protoreflect"
-    //"google.golang.org/protobuf/encoding/protojson"
+    "google.golang.org/protobuf/reflect/protoreflect"
+    "google.golang.org/protobuf/encoding/protojson"
     //"github.com/RileyR387/sc-dtc-client/marketdata"
     "github.com/RileyR387/sc-dtc-client/dtcproto"
 )
@@ -22,83 +22,87 @@ type Security struct {
     Market float64
 }
 
-func (s *Security) AddData(message proto.Message, mTypeId int32 ) {
-    switch( dtcproto.DTCMessageType(mTypeId) ){
+func (s *Security) AddData( md MarketDataUpdate ) {
+    switch( dtcproto.DTCMessageType(md.TypeId) ){
     /**
     * Market data
     **/
     case dtcproto.DTCMessageType_MARKET_DATA_REQUEST:
-        fallthrough
+        log.Error("Server requests not supported")
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_REJECT:
-        fallthrough
+        //log.Errorf("Got some market data reject: %v", md.Msg.(dtcproto.MarketDataReject))
+        log.Error("Got some market data reject: FIXME")
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_COMPACT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_LAST_TRADE_SNAPSHOT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_WITH_UNBUNDLED_INDICATOR:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_WITH_UNBUNDLED_INDICATOR_2:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_NO_TIMESTAMP:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK:
-        fallthrough
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_COMPACT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_NO_TIMESTAMP:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_VOLUME:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_OPEN_INTEREST:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_NUM_TRADES:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADING_SESSION_DATE:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_REQUEST:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_REJECT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_FLOAT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_FLOAT_WITH_MILLISECONDS:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_NO_TIMESTAMP:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_INT:
-        fallthrough
+        return
     case dtcproto.DTCMessageType_MARKET_DATA_FEED_STATUS:
         fallthrough
     case dtcproto.DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
@@ -106,7 +110,7 @@ func (s *Security) AddData(message proto.Message, mTypeId int32 ) {
     case dtcproto.DTCMessageType_TRADING_SYMBOL_STATUS:
         fallthrough
     default:
-
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
     }
 
 }
