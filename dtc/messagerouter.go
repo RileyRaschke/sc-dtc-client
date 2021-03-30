@@ -9,6 +9,7 @@ import (
     "google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
     "github.com/RileyR387/sc-dtc-client/dtcproto"
+    "github.com/RileyR387/sc-dtc-client/securities"
 )
 
 func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) error {
@@ -80,10 +81,12 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case dtcproto.DTCMessageType_ENCODING_RESPONSE:
         return nil // handled upon request
     case dtcproto.DTCMessageType_SECURITY_DEFINITION_RESPONSE:
-        //symbolAdd <-msg.(SecurityDefinitionResponse)
         d.addSecurity( msg.(*SecurityDefinition) )
         return nil
-    // Market data
+
+    /**
+    * Market data
+    **/
     case dtcproto.DTCMessageType_MARKET_DATA_REQUEST:
         fallthrough
     case dtcproto.DTCMessageType_MARKET_DATA_REJECT:
@@ -159,13 +162,15 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case dtcproto.DTCMessageType_MARKET_DATA_FEED_STATUS:
         fallthrough
     case dtcproto.DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
-        //fallthrough
-        // TODO: Create subscriptionRouter channel for subscriber write
-        d.marketData <- &msg
-        return nil
-    case dtcproto.DTCMessageType_TRADING_SYMBOL_STATUS:
         fallthrough
-    // Order entry and modification
+    case dtcproto.DTCMessageType_TRADING_SYMBOL_STATUS:
+        //d.securityMap[ xx ].AddData( msg, mTypeId )
+        //d.marketData <- &msg
+        d.marketData <- securities.MarketDataUpdate{ msg, mTypeId }
+        return nil
+    /**
+    * Order entry and modification
+    */
     case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER:
         fallthrough
     case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER_INT:

@@ -38,7 +38,7 @@ type DtcConnection struct {
     listenClose chan int
     lastHeartbeatResponse int64
     heartbeatUpdate chan *Heartbeat
-    marketData chan *proto.Message
+    marketData chan securities.MarketDataUpdate
     subscribers []*ttr.TermTraderPlugin
     securityMap map[int32] *securities.Security
     accountMap  map[string] *AccountBalance
@@ -195,14 +195,14 @@ func (d *DtcConnection) keepAlive() {
 }
 
 func (d *DtcConnection) startSubscriptionRouter(){
-    var msg *proto.Message
-    d.marketData = make(chan *proto.Message)
+    var msg securities.MarketDataUpdate
+    d.marketData = make(chan securities.MarketDataUpdate)
     d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap) }
 
     for {
         select {
         case msg = <-d.marketData:
-            d.lastHeartbeatResponse = time.Now().Unix()
+            //d.lastHeartbeatResponse = time.Now().Unix()
             // Distribute Market Data
             for _, subscriber := range d.subscribers {
                 subscriber.ReceiveData <-msg

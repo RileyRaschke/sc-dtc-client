@@ -2,24 +2,26 @@ package termtrader
 
 import (
     "fmt"
+    //"strconv"
+    "encoding/json"
     log "github.com/sirupsen/logrus"
     tm "github.com/buger/goterm"
     "time"
-    "github.com/golang/protobuf/proto"
+    //"github.com/golang/protobuf/proto"
     "google.golang.org/protobuf/encoding/protojson"
     "google.golang.org/protobuf/reflect/protoreflect"
     "github.com/RileyR387/sc-dtc-client/securities"
 )
 
 type TermTraderPlugin struct {
-    ReceiveData chan *proto.Message
+    ReceiveData chan securities.MarketDataUpdate
     lastMsgJson string
     securityMap *map[int32] *securities.Security
 }
 
 func New(sm *map[int32] *securities.Security) *TermTraderPlugin {
     x := &TermTraderPlugin{
-        make(chan *proto.Message),
+        make(chan securities.MarketDataUpdate),
         "",
         sm,
     }
@@ -30,12 +32,27 @@ func New(sm *map[int32] *securities.Security) *TermTraderPlugin {
 func (x *TermTraderPlugin) Run() {
     fmt.Println("Running TermTraderPlugin")
     log.Info(fmt.Sprintf("Running TermTraderPlugin"))
-    var msg *proto.Message
+    var mktData securities.MarketDataUpdate
     for {
         select {
-        case msg = <-x.ReceiveData:
-            //log.Debug( protojson.Format((*msg).(protoreflect.ProtoMessage)) )
-            x.lastMsgJson = protojson.Format((*msg).(protoreflect.ProtoMessage))
+        case mktData = <-x.ReceiveData:
+            // TODO: I shouldn't need to go to string before a map right?
+            var msgData interface{}
+            x.lastMsgJson = protojson.Format((mktData.Msg).(protoreflect.ProtoMessage))
+            err := json.Unmarshal([]byte(x.lastMsgJson), &msgData)
+            //err := protojson.Unmarshal((*mktData.msg).(protoreflect.ProtoMessage), &msgData)
+            //log.Trace(x.lastMsgJson)
+            //if err != nil {
+            //    log.Error("Error unmarshalling json: %v", err)
+            //}
+            //dmm := ((*mktData).(protoreflect.ProtoMessage)).(map[string]interface{})
+            dmm := msgData.(map[string]interface{})
+            if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
+                symbolDesc := (*x.securityMap)[symID].Definition.Symbol
+                log.Infof("Update for: %v", symbolDesc)
+            }
+            //#log.info( (*mktData).(
+            //if (*mktData).( // FIXME
         }
     }
 }
