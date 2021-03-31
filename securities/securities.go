@@ -198,7 +198,7 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_FLOAT_WITH_MILLISECONDS:
-        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
+        //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_NO_TIMESTAMP:
         log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )

@@ -21,7 +21,11 @@ func (s *Security) FormatPrice(p float64) string {
     }else if strings.HasPrefix(dfmtString, "PRICE_DISPLAY_FORMAT_DENOMINATOR") {
         //log.Debugf("Format value for %v is %v with string val: %v", s.Definition.Symbol, dfmtVal, dfmtString)
         intVal, fraction := math.Modf(float64(p))
-        return fmt.Sprintf("%v'%05.2f", intVal, fraction*32)
+        if intVal == 0 {
+            return fmt.Sprintf("'%05.2f", fraction*32)
+        } else {
+            return fmt.Sprintf("%v'%05.2f", intVal, fraction*32)
+        }
     } else {
         log.Warnf("Unknown price display format: %v", dfmtString)
         fmtStr = "%.6f"
