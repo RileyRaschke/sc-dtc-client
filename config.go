@@ -14,7 +14,7 @@ var (
     me = filepath.Base(os.Args[0])
     yamlFile = fmt.Sprintf("%s.yaml", me)
     envPrefix = "DTCCLIENT"
-    configSearchPaths = []string {".", "./etc", "$HOME/.dtc-client-go/", "$HOME/etc", "/etc"}
+    configSearchPaths = []string {".", "./etc", "$HOME/.sc-dtc-client/", "$HOME/etc", "/etc"}
     genConfig = getopt.BoolLong("genconfig", 'x', "Write example config to \"./" + yamlFile + "\"")
 )
 
@@ -36,6 +36,7 @@ func init() {
     viper.SetDefault("dtc.Password", "")
     viper.SetDefault("dtc.Reconnect", false)
     viper.SetDefault("log.level", "TRACE")
+    viper.SetDefault("log.file", "")
 
     getopt.SetUsage(func() { usage() })
     getopt.Parse()
@@ -57,7 +58,7 @@ func init() {
         }
     }
 
-    initLogger( viper.GetString("log.level") )
+    initLogger( viper.GetString("log.level"), viper.GetString("log.file") )
 }
 
 func configWrite(){
@@ -73,6 +74,7 @@ export ` + envPrefix + `_DTC_HISTPORT='11098'
 export ` + envPrefix + `_DTC_USERNAME=''
 export ` + envPrefix + `_DTC_PASSWORD=''
 export ` + envPrefix + `_LOG_LEVEL='TRACE'
+export ` + envPrefix + `_LOG_FILE='sc-dtc-client.log'
 `)
     os.Exit(0)
 }

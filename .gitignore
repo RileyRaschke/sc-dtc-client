@@ -6,3 +6,4 @@ credentials.env
 sc-dtc-client.exe
 sc-dtc-client.exe.yaml
 *.log
+*.err

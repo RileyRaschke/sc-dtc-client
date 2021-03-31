@@ -7,6 +7,7 @@ import (
     "net"
     "time"
     "io"
+    "sync"
     "bufio"
     "errors"
     "encoding/binary"
@@ -41,6 +42,7 @@ type DtcConnection struct {
     marketData chan securities.MarketDataUpdate
     subscribers []*ttr.TermTraderPlugin
     securityMap map[int32] *securities.Security
+    securityMapMutex sync.RWMutex
     accountMap  map[string] *AccountBalance
     keepingAlive bool
     listening bool
@@ -90,6 +92,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connUri = uri
 
     d.securityMap = make(map[int32]*securities.Security)
+    d.securityMapMutex = sync.RWMutex{}
     d.accountMap = make(map[string]*AccountBalance)
 
     d._SetEncoding()
@@ -141,7 +144,9 @@ func (d *DtcConnection) initTrading() (error) {
 
 func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
     log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
+    d.securityMapMutex.Lock()
     d.securityMap[def.RequestID] = &securities.Security{Definition: def}
+    d.securityMapMutex.Unlock()
 }
 
 func (d *DtcConnection) Disconnect() {
@@ -197,12 +202,12 @@ func (d *DtcConnection) keepAlive() {
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg securities.MarketDataUpdate
     d.marketData = make(chan securities.MarketDataUpdate)
-    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap) }
+    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap, d.securityMapMutex ) }
 
     for {
         select {
         case msg = <-d.marketData:
-            //d.lastHeartbeatResponse = time.Now().Unix()
+            d.lastHeartbeatResponse = time.Now().Unix()
             // Distribute Market Data
             for _, subscriber := range d.subscribers {
                 subscriber.ReceiveData <-msg
