@@ -4,7 +4,7 @@ import (
     "fmt"
     "sort"
     //"strconv"
-    "encoding/json"
+    //"encoding/json"
     "sync"
     log "github.com/sirupsen/logrus"
     tm "github.com/buger/goterm"
@@ -41,20 +41,8 @@ func (x *TermTraderPlugin) Run() {
     for {
         select {
         case mktData = <-x.ReceiveData:
-            var mktDataI interface{}
-            // TODO: I shouldn't need to go to string before a map right?
             x.lastMsgJson = protojson.Format((mktData.Msg).(protoreflect.ProtoMessage))
-            err := json.Unmarshal([]byte(x.lastMsgJson), &mktDataI)
-            dmm := mktDataI.(map[string]interface{})
-
-            if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
-                //symbolDesc := (*x.securityMap)[symID].Definition.Symbol
-                //log.Tracef("Update for: %v", symbolDesc)
-                x.securityMapMutex.Lock()
-                (*x.securityMap)[symID].AddData(mktData)
-                x.securityMapMutex.Unlock()
-                x.DrawWatchlist()
-            }
+            x.DrawWatchlist()
         }
     }
 }

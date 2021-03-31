@@ -11,9 +11,10 @@ import (
     "bufio"
     "errors"
     "encoding/binary"
+    "encoding/json"
     "reflect"
     "github.com/golang/protobuf/proto"
-    //"google.golang.org/protobuf/reflect/protoreflect"
+    "google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
@@ -207,7 +208,20 @@ func (d *DtcConnection) startSubscriptionRouter(){
     for {
         select {
         case msg = <-d.marketData:
-            d.lastHeartbeatResponse = time.Now().Unix()
+            //d.lastHeartbeatResponse = time.Now().Unix()
+            var mktDataI interface{}
+            // TODO: I shouldn't need to go to string before a map right?
+            var lastMsgJson = protojson.Format((msg.Msg).(protoreflect.ProtoMessage))
+            err := json.Unmarshal([]byte(lastMsgJson), &mktDataI)
+            dmm := mktDataI.(map[string]interface{})
+
+            if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
+                //symbolDesc := d.securityMap)[symID].Definition.Symbol
+                //log.Tracef("Update for: %v", symbolDesc)
+                d.securityMapMutex.Lock()
+                d.securityMap[symID].AddData(msg)
+                d.securityMapMutex.Unlock()
+            }
             // Distribute Market Data
             for _, subscriber := range d.subscribers {
                 subscriber.ReceiveData <-msg
