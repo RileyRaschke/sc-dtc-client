@@ -68,7 +68,7 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         s.Ask = mds.AskPrice
         s.Last = mds.LastTradePrice
         s.LastTradeVolume = uint32(mds.LastTradeVolume)
-        s.SessionVolume += s.LastTradeVolume
+        s.SessionVolume += uint32(mds.LastTradeVolume)
 
         return
     case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT_INT:
@@ -79,18 +79,18 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         mdu := md.Msg.(*dtcproto.MarketDataUpdateTrade)
         s.Last = float64(mdu.Price)
         s.LastTradeVolume = uint32(mdu.Volume)
+        s.SessionVolume += uint32(mdu.Volume)
         s.LastData = float64(mdu.DateTime)
         s.LastSide = string(mdu.AtBidOrAsk)
-        s.SessionVolume += s.LastTradeVolume
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_COMPACT:
         //log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         mdu := md.Msg.(*dtcproto.MarketDataUpdateTradeCompact)
         s.Last = float64(mdu.Price)
         s.LastTradeVolume = uint32(mdu.Volume)
+        s.SessionVolume += uint32(mdu.Volume)
         s.LastData = float64(mdu.DateTime)
         s.LastSide = string(mdu.AtBidOrAsk)
-        s.SessionVolume += s.LastTradeVolume
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_INT:
         log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
@@ -99,7 +99,7 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         mdu := md.Msg.(*dtcproto.MarketDataUpdateLastTradeSnapshot)
         s.Last = mdu.LastTradePrice
         s.LastTradeVolume = uint32(mdu.LastTradeVolume)
-        s.SessionVolume += s.LastTradeVolume
+        s.SessionVolume += uint32(mdu.LastTradeVolume)
         s.LastData = mdu.LastTradeDateTime
         return
     case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_WITH_UNBUNDLED_INDICATOR:
@@ -186,18 +186,25 @@ func (s *Security) AddData( md MarketDataUpdate ) {
         log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_INT:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_FLOAT:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_FLOAT_WITH_MILLISECONDS:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_NO_TIMESTAMP:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_INT:
+        log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
         return
     case dtcproto.DTCMessageType_MARKET_DATA_FEED_STATUS:
         fallthrough

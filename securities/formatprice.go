@@ -39,7 +39,10 @@ func (s *Security) AskString() string {
     return s.FormatPrice(s.Ask)
 }
 func (s *Security) LastString() string {
-    return s.FormatPrice(s.Ask)
+    return s.FormatPrice(s.Last)
+}
+func (s *Security) DchgString() string {
+    return s.FormatPrice(s.Last-s.SettlementPrice)
 }
 
 func (s *Security) SettlementString() string {

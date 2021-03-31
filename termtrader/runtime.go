@@ -82,11 +82,11 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     x.securityMapMutex.Unlock()
     sort.Strings(syms)
 
-    fmtStr := " %-15v %10v %10v %10v %10v %10v %10v %10v %10v"
+    fmtStr := " %-15v %10v %10v %10v %10v %10v %10v %10v %10v %10v"
     rowData := []string{}
     rowData = append(rowData, fmt.Sprintf("Current Time: %v", time.Now().Format(time.RFC1123)))
     rowData = append(rowData, "")
-    rowData = append(rowData, fmt.Sprintf(fmtStr, "Symbol", "Bid", "Ask", "Last", "Settle","High","Low","Volume","OI"))
+    rowData = append(rowData, fmt.Sprintf(fmtStr, "Symbol", "Bid", "Ask", "Last", "dChg", "Settle","High","Low","Volume","OI"))
     x.securityMapMutex.Lock()
     for _, symKey := range syms {
         sec := (*x.securityMap)[nameMap[symKey]]
@@ -95,6 +95,7 @@ func (x *TermTraderPlugin) DrawWatchlist() {
                 sec.BidString(),
                 sec.AskString(),
                 sec.LastString(),
+                sec.DchgString(),
                 sec.SettlementString(),
                 sec.FormatPrice(sec.SessionHighPrice),
                 sec.FormatPrice(sec.SessionLowPrice),
