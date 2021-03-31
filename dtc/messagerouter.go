@@ -28,7 +28,7 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case dtcproto.DTCMessageType_LOGON_RESPONSE:
         return nil // handled at logon
     case dtcproto.DTCMessageType_HEARTBEAT:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
+        //log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
         d.heartbeatUpdate <-msg.(*Heartbeat)
         return nil
     // Account list

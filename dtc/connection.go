@@ -346,7 +346,9 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
-    log.Tracef("Packed message with TypeID: %v (%v) with length %v and contents: 0x%x", mTypeId, dtcproto.DTCMessageType_name[mTypeId], length, message)
+    if dtcproto.DTCMessageType_name[mTypeId] != "HEARTBEAT" {
+        log.Tracef("Packed message with TypeID: %v (%v) with length %v and contents: 0x%x", mTypeId, dtcproto.DTCMessageType_name[mTypeId], length, message)
+    }
     return message
 }
 
