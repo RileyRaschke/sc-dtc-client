@@ -109,7 +109,7 @@ func (x *TermTraderPlugin) DrawWatchlist() {
 }
 
 func ColorizeChangeString(v string) string {
-    if strings.HasPrefix(v,"-"){
+    if strings.HasPrefix(v,"-") || strings.HasPrefix(v, "'-") {
         red := color.FgRed.Render
         return red(v)
 
