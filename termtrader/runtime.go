@@ -2,6 +2,8 @@ package termtrader
 
 import (
     "fmt"
+    "strings"
+    "github.com/gookit/color"
     "sort"
     //"strconv"
     //"encoding/json"
@@ -70,21 +72,27 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     x.securityMapMutex.Unlock()
     sort.Strings(syms)
 
-    fmtStr := " %-15v %10v %10v %10v %10v %10v %10v %10v %10v %10v %10v"
     rowData := []string{}
     rowData = append(rowData, fmt.Sprintf("Current Time: %v", time.Now().Format(time.RFC1123)))
     rowData = append(rowData, "")
-    rowData = append(rowData, fmt.Sprintf(fmtStr, "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume","OI"))
+    rowData = append(rowData,
+        fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v %10v",
+            "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume","OI",
+        ),
+    )
     x.securityMapMutex.Lock()
+    fmtStrColor := " %-15v %10v %10v %10v %18v %18v %10v %10v %10v %10v %10v"
     for _, symKey := range syms {
         sec := (*x.securityMap)[nameMap[symKey]]
-        rowData = append(rowData, fmt.Sprintf(fmtStr,
+        rowData = append(rowData, fmt.Sprintf(fmtStrColor,
                 sec.Definition.Symbol,
                 sec.BidString(),
                 sec.AskString(),
                 sec.LastString(),
-                sec.DchgString(),
-                fmt.Sprintf("%.2f%%", ((sec.Last-sec.SettlementPrice)/sec.SettlementPrice)*100),
+                ColorizeChangeString( sec.DchgString() ),
+                ColorizeChangeString(
+                    fmt.Sprintf("%.2f%%", ((sec.Last-sec.SettlementPrice)/sec.SettlementPrice)*100),
+                ),
                 sec.SettlementString(),
                 sec.FormatPrice(sec.SessionHighPrice),
                 sec.FormatPrice(sec.SessionLowPrice),
@@ -98,5 +106,17 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     rowData = append(rowData, "")
     x.securityMapMutex.Unlock()
     x.screenWrite(&rowData)
+}
+
+func ColorizeChangeString(v string) string {
+    if strings.HasPrefix(v,"-"){
+        red := color.FgRed.Render
+        return red(v)
+
+    } else {
+        green := color.FgGreen.Render
+        return green(v)
+
+    }
 }
 
