@@ -76,19 +76,19 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     rowData = append(rowData, fmt.Sprintf("Current Time: %v", time.Now().Format(time.RFC1123)))
     rowData = append(rowData, "")
     rowData = append(rowData,
-        fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v %10v",
-            "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume","OI",
+        fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v",
+            "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume",//"OI",
         ),
     )
     x.securityMapMutex.Lock()
-    fmtStrColor := " %-15v %10v %10v %10v %18v %18v %10v %10v %10v %10v %10v"
+    fmtStrColor := " %-24v %10v %10v %18v %18v %18v %10v %10v %10v %10v"
     for _, symKey := range syms {
         sec := (*x.securityMap)[nameMap[symKey]]
         rowData = append(rowData, fmt.Sprintf(fmtStrColor,
-                sec.Definition.Symbol,
+                color.FgYellow.Render(sec.Definition.Symbol),
                 sec.BidString(),
                 sec.AskString(),
-                sec.LastString(),
+                color.Bold.Render(sec.LastString()),
                 ColorizeChangeString( sec.DchgString() ),
                 ColorizeChangeString(
                     fmt.Sprintf("%.2f%%", ((sec.Last-sec.SettlementPrice)/sec.SettlementPrice)*100),
@@ -97,7 +97,7 @@ func (x *TermTraderPlugin) DrawWatchlist() {
                 sec.FormatPrice(sec.SessionHighPrice),
                 sec.FormatPrice(sec.SessionLowPrice),
                 sec.SessionVolume,
-                sec.OpenInterest,
+                //sec.OpenInterest,
                 //time.Unix(int64(sec.SessionSettlementDateTime), 0),
             ))
     }
