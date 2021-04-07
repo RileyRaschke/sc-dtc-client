@@ -55,7 +55,6 @@ func init() {
 }
 
 func (d *DtcConnection) _Listen() {
-    d.listenClose = make(chan int)
     d.listening = true
     log.Infof("Client listener started")
     for {
@@ -93,8 +92,14 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connUri = uri
 
     d.securityMap = make(map[int32]*securities.Security)
-    d.securityMapMutex = sync.RWMutex{}
     d.accountMap = make(map[string]*AccountBalance)
+
+    d.clientClose = make(chan int)
+    d.listenClose = make(chan int)
+    d.heartbeatUpdate = make(chan *Heartbeat)
+    d.marketData = make(chan securities.MarketDataUpdate)
+
+    d.securityMapMutex = sync.RWMutex{}
 
     d._SetEncoding()
 
@@ -105,12 +110,11 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     }
     d.loggedOn = true
     d.connected = true
+    go d._ReceiveHeartbeat()
     go d._Listen()
     go d.keepAlive()
     if d.backOffRate < 2 {
         d.backOffRate = 1
-        log.Trace("Starting hearbeat listener...")
-        go d._ReceiveHeartbeat()
     }
     go d.startSubscriptionRouter()
     //go d.initTrading()
@@ -146,7 +150,8 @@ func (d *DtcConnection) initTrading() (error) {
 func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
     log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
     d.securityMapMutex.Lock()
-    d.securityMap[def.RequestID] = &securities.Security{Definition: def}
+    //d.securityMap[def.RequestID] = &securities.Security{Definition: def}
+    d.securityMap[def.RequestID] = securities.New(def)
     d.securityMapMutex.Unlock()
 }
 
@@ -181,7 +186,6 @@ func (d *DtcConnection) closeListener() {
 }
 
 func (d *DtcConnection) keepAlive() {
-    d.clientClose = make(chan int)
     d.keepingAlive = true
     for {
         select {
@@ -202,7 +206,6 @@ func (d *DtcConnection) keepAlive() {
 
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg securities.MarketDataUpdate
-    d.marketData = make(chan securities.MarketDataUpdate)
     d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap, d.securityMapMutex ) }
 
     for {
@@ -223,16 +226,17 @@ func (d *DtcConnection) startSubscriptionRouter(){
                 d.securityMapMutex.Unlock()
             }
             // Distribute Market Data
+            d.securityMapMutex.Lock()
             for _, subscriber := range d.subscribers {
                 subscriber.ReceiveData <-msg
             }
+            d.securityMapMutex.Unlock()
         }
     }
 }
 
 func (d *DtcConnection) _ReceiveHeartbeat() {
     var m *Heartbeat
-    d.heartbeatUpdate = make(chan *Heartbeat)
     d.lastHeartbeatResponse = time.Now().Unix()
     for {
         select {

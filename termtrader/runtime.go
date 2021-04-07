@@ -44,7 +44,9 @@ func (x *TermTraderPlugin) Run() {
         select {
         case mktData = <-x.ReceiveData:
             x.lastMsgJson = protojson.Format((mktData.Msg).(protoreflect.ProtoMessage))
+            x.securityMapMutex.Lock()
             x.DrawWatchlist()
+            x.securityMapMutex.Unlock()
         }
     }
 }
@@ -64,12 +66,12 @@ func (x *TermTraderPlugin) screenWrite(screenData *[]string) {
 func (x *TermTraderPlugin) DrawWatchlist() {
     nameMap := map[string]int32{}
     syms := make([]string, 0, len(*x.securityMap))
-    x.securityMapMutex.Lock()
     for k, v := range *x.securityMap {
         nameMap[v.Definition.Symbol] = k
+        v.AddingDataMutex.Lock()
         syms = append( syms, v.Definition.Symbol )
+        v.AddingDataMutex.Unlock()
     }
-    x.securityMapMutex.Unlock()
     sort.Strings(syms)
 
     rowData := []string{}
@@ -80,18 +82,17 @@ func (x *TermTraderPlugin) DrawWatchlist() {
             "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume",//"OI",
         ),
     )
-    x.securityMapMutex.Lock()
     fmtStrColor := " %-24v %10v %10v %18v %18v %18v %10v %10v %10v %10v"
     for _, symKey := range syms {
         sec := (*x.securityMap)[nameMap[symKey]]
         rowData = append(rowData, fmt.Sprintf(fmtStrColor,
-                color.FgYellow.Render(sec.Definition.Symbol),
+                color.FgYellow.Render(sec.GetSymbol()),
                 sec.BidString(),
                 sec.AskString(),
                 color.Bold.Render(sec.LastString()),
                 ColorizeChangeString( sec.DchgString() ),
                 ColorizeChangeString(
-                    fmt.Sprintf("%.2f%%", ((sec.Last-sec.SettlementPrice)/sec.SettlementPrice)*100),
+                    fmt.Sprintf("%.2f%%", ((sec.GetLastPrice()-sec.GetSettlementPrice())/sec.GetSettlementPrice())*100),
                 ),
                 sec.SettlementString(),
                 sec.FormatPrice(sec.SessionHighPrice),
@@ -104,7 +105,6 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     rowData = append(rowData, "")
     //rowData = append(rowData, fmt.Sprintf("%+v\n", (*x.securityMap)[nameMap["F.US.MESM21"]].Definition))
     rowData = append(rowData, "")
-    x.securityMapMutex.Unlock()
     x.screenWrite(&rowData)
 }
 

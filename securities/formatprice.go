@@ -34,21 +34,25 @@ func (s *Security) FormatPrice(p float64) string {
 }
 
 func (s *Security) String() string {
-    return fmt.Sprintf("%15v %10v %10v %v", s.Definition.Symbol, s.BidString(), s.AskString(), s.Definition)
+    bs := s.BidString()
+    as := s.AskString()
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return fmt.Sprintf("%15v %10v %10v %v", s.Definition.Symbol, bs, as, s.Definition)
 }
 func (s *Security) BidString() string {
-    return s.FormatPrice(s.Bid)
+    return s.FormatPrice(s.BidPrice())
 }
 func (s *Security) AskString() string {
-    return s.FormatPrice(s.Ask)
+    return s.FormatPrice(s.AskPrice())
 }
 func (s *Security) LastString() string {
-    return s.FormatPrice(s.Last)
+    return s.FormatPrice(s.GetLastPrice())
 }
 func (s *Security) DchgString() string {
-    return s.FormatPrice(s.Last-s.SettlementPrice)
+    return s.FormatPrice(s.GetLastPrice()-s.GetSettlementPrice())
 }
 
 func (s *Security) SettlementString() string {
-    return s.FormatPrice(s.SettlementPrice)
+    return s.FormatPrice(s.GetSettlementPrice())
 }

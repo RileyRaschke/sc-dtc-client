@@ -4,6 +4,7 @@ import (
     //"fmt"
     //"math"
     //"strings"
+    "sync"
     log "github.com/sirupsen/logrus"
     //"reflect"
     "github.com/golang/protobuf/proto"
@@ -37,9 +38,54 @@ type Security struct {
     LastData float64
     LastTradeVolume uint32
     LastSide string
+    AddingDataMutex sync.Mutex
+}
+
+func New(def *dtcproto.SecurityDefinitionResponse) *Security {
+    res := &Security{Definition: def}
+    return res
+}
+
+func (s *Security) BidPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.Bid
+}
+func (s *Security) AskPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.Ask
+}
+
+func (s *Security) GetSettlementPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.SettlementPrice
+}
+func (s *Security) GetLastPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.Last
+}
+func (s *Security) GetSymbol() string {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.Definition.Symbol
+}
+func (s *Security) GetSessionHighPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.SessionHighPrice
+}
+func (s *Security) GetSessionLowPrice() float64 {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
+    return s.SessionLowPrice
 }
 
 func (s *Security) AddData( md MarketDataUpdate ) {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
     switch( dtcproto.DTCMessageType(md.TypeId) ){
     /**
     * Market data
