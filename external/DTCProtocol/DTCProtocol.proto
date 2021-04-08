@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package DTC_PB;
-option go_package = "sc-dtc-client/dtc";
+option go_package = "sc-dtc-client/dtcproto";
 
 //============================================================================
 // DTC protocol version

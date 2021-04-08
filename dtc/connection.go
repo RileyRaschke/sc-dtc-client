@@ -7,14 +7,13 @@ import (
     "net"
     "time"
     "io"
-    "sync"
     "bufio"
     "errors"
     "encoding/binary"
-    "encoding/json"
+    //"encoding/json"
     "reflect"
     "github.com/golang/protobuf/proto"
-    "google.golang.org/protobuf/reflect/protoreflect"
+    //"google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
     "strings"
@@ -33,6 +32,7 @@ type DtcConnection struct {
     connUri string
     conn  net.Conn
     connected bool
+    reconnecting bool
     terminated bool
     reader io.Reader
     requestId int32
@@ -42,8 +42,7 @@ type DtcConnection struct {
     heartbeatUpdate chan *Heartbeat
     marketData chan securities.MarketDataUpdate
     subscribers []*ttr.TermTraderPlugin
-    securityMap map[int32] *securities.Security
-    securityMapMutex sync.RWMutex
+    securityStore *securities.SecurityStore
     accountMap  map[string] *AccountBalance
     keepingAlive bool
     listening bool
@@ -91,18 +90,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.connArgs = c
     d.connUri = uri
 
-    d.securityMap = make(map[int32]*securities.Security)
-    d.accountMap = make(map[string]*AccountBalance)
-
-    d.clientClose = make(chan int)
-    d.listenClose = make(chan int)
-    d.heartbeatUpdate = make(chan *Heartbeat)
-    d.marketData = make(chan securities.MarketDataUpdate)
-
-    d.securityMapMutex = sync.RWMutex{}
-
     d._SetEncoding()
-
     err = d._Logon()
     if err != nil {
         d.Disconnect()
@@ -110,14 +98,25 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     }
     d.loggedOn = true
     d.connected = true
-    go d._ReceiveHeartbeat()
-    go d._Listen()
-    go d.keepAlive()
-    if d.backOffRate < 2 {
-        d.backOffRate = 1
+
+    if ! d.reconnecting {
+        d.securityStore = securities.NewSecurityStore()
+        d.accountMap = make(map[string]*AccountBalance)
+
+        d.clientClose = make(chan int)
+        d.listenClose = make(chan int)
+        d.heartbeatUpdate = make(chan *Heartbeat)
+        d.marketData = make(chan securities.MarketDataUpdate)
+        if d.backOffRate < 2 {
+            d.backOffRate = 1
+        }
+        go d._ReceiveHeartbeat()
+        go d._Listen()
+        go d.keepAlive()
+        go d.startSubscriptionRouter()
+        go d.initTrading()
+        d.reconnecting = false
     }
-    go d.startSubscriptionRouter()
-    //go d.initTrading()
 
     return nil
 }
@@ -125,34 +124,22 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
 * Test bed for now.
 */
 func (d *DtcConnection) initTrading() (error) {
-
-    time.Sleep( 2*time.Second )
+    time.Sleep( 5*time.Second )
     err := d.LoadAccounts()
     if err != nil {
         log.Fatalf("Failed to load accounts with error: %v", err)
     }
-
-    time.Sleep( 2*time.Second )
+    time.Sleep( 5*time.Second )
     err = d.AccountBlanaceRefresh()
     if err != nil {
         log.Fatalf("Failed to load account balances with error: %v", err)
     }
-
-    time.Sleep( 2*time.Second )
-    err = d.HistoricalFills()
-    if err != nil {
-        log.Fatalf("Failed to load historical fills with error: %v", err)
-    }
-
     return err
 }
 
 func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
     log.Infof("Added security %v from exchange %v as %v with ID: %v", def.ExchangeSymbol, def.Exchange, def.Symbol, def.RequestID)
-    d.securityMapMutex.Lock()
-    //d.securityMap[def.RequestID] = &securities.Security{Definition: def}
-    d.securityMap[def.RequestID] = securities.New(def)
-    d.securityMapMutex.Unlock()
+    d.securityStore.AddSecurity( securities.FromDef(def) )
 }
 
 func (d *DtcConnection) Disconnect() {
@@ -206,31 +193,17 @@ func (d *DtcConnection) keepAlive() {
 
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg securities.MarketDataUpdate
-    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(&d.securityMap, d.securityMapMutex ) }
+    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(d.securityStore) }
 
     for {
         select {
         case msg = <-d.marketData:
             //d.lastHeartbeatResponse = time.Now().Unix()
-            var mktDataI interface{}
-            // TODO: I shouldn't need to go to string before a map right?
-            var lastMsgJson = protojson.Format((msg.Msg).(protoreflect.ProtoMessage))
-            err := json.Unmarshal([]byte(lastMsgJson), &mktDataI)
-            dmm := mktDataI.(map[string]interface{})
-
-            if symID := int32( dmm["SymbolID"].(float64) ); err == nil {
-                //symbolDesc := d.securityMap)[symID].Definition.Symbol
-                //log.Tracef("Update for: %v", symbolDesc)
-                d.securityMapMutex.Lock()
-                d.securityMap[symID].AddData(msg)
-                d.securityMapMutex.Unlock()
-            }
-            // Distribute Market Data
-            d.securityMapMutex.Lock()
+            d.securityStore.AddData(msg)
+            // Distribute Market data to other subscribers
             for _, subscriber := range d.subscribers {
                 subscriber.ReceiveData <-msg
             }
-            d.securityMapMutex.Unlock()
         }
     }
 }
@@ -241,23 +214,31 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
     for {
         select {
         case m = <-d.heartbeatUpdate:
-            if d.lastHeartbeatResponse < m.CurrentDateTime-30 {
+            if m.CurrentDateTime - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS+5 {
                 log.Warnf("Received late heartbeat, span from last: %v", m.CurrentDateTime-d.lastHeartbeatResponse)
+            } else {
+                //log.Trace("Received sane heartbeat")
             }
-            d.lastHeartbeatResponse = m.CurrentDateTime
+            d.lastHeartbeatResponse = time.Now().Unix()
+            //d.lastHeartbeatResponse = m.CurrentDateTime
+            //log.Tracef("Updated last heartbeat to %v", m.CurrentDateTime)
         default:
-            //time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Millisecond )
-            time.Sleep( time.Duration(d.backOffRate) * 500 * time.Millisecond )
-            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*2 {
+            time.Sleep( time.Duration(d.backOffRate) * 400 * time.Millisecond )
+            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*3 {
                 log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
                 if d.listening && !d.connArgs.Reconnect {
                     d.Disconnect()
+                } else {
+                    if d.loggedOn {
+                        d._Logoff()
+                    }
                 }
                 if !d.listening && !d.connArgs.Reconnect {
                     log.Warn("No longer listening, closing hearbeat listening thread")
                     return
                 } else {
                     log.Warn("Attempting reconnect...")
+                    d.reconnecting = true
                     d.backOffRate = d.backOffRate * 2
                     d.Connect( d.connArgs )
                 }

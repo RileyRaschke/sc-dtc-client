@@ -31,44 +31,37 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         //log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
         d.heartbeatUpdate <-msg.(*Heartbeat)
         return nil
-    // Account list
-    case dtcproto.DTCMessageType_TRADE_ACCOUNT_RESPONSE:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
+    /**
+    * Account List/Balance Data
+    **/
     case dtcproto.DTCMessageType_TRADE_ACCOUNTS_REQUEST:
-        return nil // server action
-    // Account balance
+        fallthrough // server action
+    case dtcproto.DTCMessageType_TRADE_ACCOUNT_RESPONSE:
+        fallthrough
     case dtcproto.DTCMessageType_ACCOUNT_BALANCE_UPDATE:
-        log.Debugf("Received %v(%v)\n%v",
+        fallthrough
+    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_REQUEST:
+        fallthrough
+    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT:
+        fallthrough
+    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_COMPLETE:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REQUEST:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
+        log.Debugf("Balance Data Received %v(%v)\n%v",
             dtcproto.DTCMessageType_name[mTypeId],
             mTypeId,
             protojson.Format(msg.(protoreflect.ProtoMessage)),
         )
         return nil
-    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_REQUEST:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_REJECT:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_REJECT:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_ACCOUNT_BALANCE_ADJUSTMENT_COMPLETE:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REQUEST:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
-    case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
-        log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-        return nil
+
     case dtcproto.DTCMessageType_LOGOFF:
         log.Warn("Received logoff request from server!")
         d.loggedOn = false

@@ -1,11 +1,11 @@
 package dtc
 
 import (
-    "fmt"
+    //"fmt"
     "errors"
     log "github.com/sirupsen/logrus"
     "github.com/golang/protobuf/proto"
-    "google.golang.org/protobuf/encoding/protojson"
+    //"google.golang.org/protobuf/encoding/protojson"
     "github.com/RileyR387/sc-dtc-client/dtcproto"
 )
 
@@ -29,7 +29,7 @@ func (d *DtcConnection) LoadAccounts() error {
     log.Debug("Sending TRADE_ACCOUNTS_REQUEST")
     //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
     d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["TRADE_ACCOUNTS_REQUEST"] ))
-    fmt.Println( protojson.Format(&tradeActReq) )
+    //fmt.Println( protojson.Format(&tradeActReq) )
     return err
 }
 
@@ -52,15 +52,15 @@ func (d *DtcConnection) AccountBlanaceRefresh() error {
     log.Debug("Sending ACCOUNT_BALANCE_REQUEST")
     //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
     d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["ACCOUNT_BALANCE_REQUEST"] ))
-    fmt.Println( protojson.Format(&balReq) )
+    //fmt.Println( protojson.Format(&balReq) )
     return err
 }
 
-func (d *DtcConnection) HistoricalFills() error {
+func (d *DtcConnection) HistoricalFills(tradeAccount string) error {
     fillHistReq := dtcproto.HistoricalOrderFillsRequest{
         RequestID: d.nextRequestID(),
         ServerOrderID: "",
-        TradeAccount: "111151",
+        TradeAccount: tradeAccount,
         NumberOfDays: 3,
     }
     msg, err := proto.Marshal( &fillHistReq )
@@ -71,6 +71,6 @@ func (d *DtcConnection) HistoricalFills() error {
     log.Debug("Sending HISTORICAL_ORDER_FILLS_REQUEST")
     //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
     d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
-    fmt.Println( protojson.Format(&fillHistReq) )
+    //fmt.Println( protojson.Format(&fillHistReq) )
     return err
 }
