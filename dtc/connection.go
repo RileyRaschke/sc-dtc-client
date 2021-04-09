@@ -26,6 +26,7 @@ import (
 )
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 10
+const CONN_BUFFER_SIZE = 32768
 
 type DtcConnection struct {
     connArgs ConnectArgs
@@ -86,7 +87,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     }
 
     d.conn = conn
-    d.reader = bufio.NewReader(d.conn)
+    d.reader = bufio.NewReaderSize(d.conn, CONN_BUFFER_SIZE)
     d.connArgs = c
     d.connUri = uri
 

@@ -21,12 +21,14 @@ type TermTraderPlugin struct {
     ReceiveData chan securities.MarketDataUpdate
     //lastMsgJson string
     securityStore *securities.SecurityStore
+    startTime int64
 }
 
 func New(sm *securities.SecurityStore) *TermTraderPlugin {
     x := &TermTraderPlugin{
         make(chan securities.MarketDataUpdate),
         sm,
+        time.Now().Unix(),
     }
     go x.Run()
     return x
@@ -54,7 +56,7 @@ func (x *TermTraderPlugin) DrawWatchlist() {
     sort.Strings(syms)
 
     rowData := []string{}
-    rowData = append(rowData, fmt.Sprintf("Current Time: %v", time.Now().Format(time.RFC1123)))
+    rowData = append(rowData, fmt.Sprintf("Current Time: %v\tRuntime: %v", time.Now().Format(time.RFC1123), time.Now().Unix()-x.startTime))
     rowData = append(rowData, "")
     rowData = append(rowData,
         fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v",
