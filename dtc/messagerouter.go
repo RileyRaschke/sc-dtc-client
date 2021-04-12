@@ -32,6 +32,44 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         d.heartbeatUpdate <-msg.(*Heartbeat)
         return nil
     /**
+    * Order entry and modification
+    */
+    case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER:
+        fallthrough
+    case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER_INT:
+        fallthrough
+    case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER:
+        fallthrough
+    case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER_INT:
+        fallthrough
+    case dtcproto.DTCMessageType_SUBMIT_FLATTEN_POSITION_ORDER:
+        fallthrough
+    case dtcproto.DTCMessageType_CANCEL_ORDER:
+        fallthrough
+    case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER:
+        fallthrough
+    case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER_INT:
+        fallthrough
+    // Trading related
+    case dtcproto.DTCMessageType_OPEN_ORDERS_REQUEST:
+        fallthrough
+    case dtcproto.DTCMessageType_OPEN_ORDERS_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_ORDER_UPDATE:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILLS_REQUEST:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILL_RESPONSE:
+        fallthrough
+    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILLS_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_CURRENT_POSITIONS_REQUEST:
+        fallthrough
+    case dtcproto.DTCMessageType_CURRENT_POSITIONS_REJECT:
+        fallthrough
+    case dtcproto.DTCMessageType_POSITION_UPDATE:
+        fallthrough
+    /**
     * Account List/Balance Data
     **/
     case dtcproto.DTCMessageType_TRADE_ACCOUNTS_REQUEST:
@@ -55,11 +93,12 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
     case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
         fallthrough
     case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
-        log.Debugf("Balance Data Received %v(%v)\n%v",
+        log.Debugf("Balance or Order Data Received %v(%v)\n%v",
             dtcproto.DTCMessageType_name[mTypeId],
             mTypeId,
             protojson.Format(msg.(protoreflect.ProtoMessage)),
         )
+        go d.accountStore.AddData(msg, mTypeId)
         return nil
 
     case dtcproto.DTCMessageType_LOGOFF:
@@ -161,44 +200,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
         //d.marketData <- &msg
         d.marketData <- securities.MarketDataUpdate{ msg, mTypeId }
         return nil
-    /**
-    * Order entry and modification
-    */
-    case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER:
-        fallthrough
-    case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER_INT:
-        fallthrough
-    case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER:
-        fallthrough
-    case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER_INT:
-        fallthrough
-    case dtcproto.DTCMessageType_SUBMIT_FLATTEN_POSITION_ORDER:
-        fallthrough
-    case dtcproto.DTCMessageType_CANCEL_ORDER:
-        fallthrough
-    case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER:
-        fallthrough
-    case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER_INT:
-        fallthrough
-    // Trading related
-    case dtcproto.DTCMessageType_OPEN_ORDERS_REQUEST:
-        fallthrough
-    case dtcproto.DTCMessageType_OPEN_ORDERS_REJECT:
-        fallthrough
-    case dtcproto.DTCMessageType_ORDER_UPDATE:
-        fallthrough
-    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILLS_REQUEST:
-        fallthrough
-    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILL_RESPONSE:
-        fallthrough
-    case dtcproto.DTCMessageType_HISTORICAL_ORDER_FILLS_REJECT:
-        fallthrough
-    case dtcproto.DTCMessageType_CURRENT_POSITIONS_REQUEST:
-        fallthrough
-    case dtcproto.DTCMessageType_CURRENT_POSITIONS_REJECT:
-        fallthrough
-    case dtcproto.DTCMessageType_POSITION_UPDATE:
-        fallthrough
     // Symbol discovery and security definitions
     case dtcproto.DTCMessageType_EXCHANGE_LIST_REQUEST:
         fallthrough

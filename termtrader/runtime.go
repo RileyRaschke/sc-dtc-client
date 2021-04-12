@@ -15,19 +15,22 @@ import (
     //"google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoreflect"
     "github.com/RileyR387/sc-dtc-client/securities"
+    "github.com/RileyR387/sc-dtc-client/accounts"
 )
 
 type TermTraderPlugin struct {
     ReceiveData chan securities.MarketDataUpdate
     //lastMsgJson string
     securityStore *securities.SecurityStore
+    accountStore *accounts.AccountStore
     startTime int64
 }
 
-func New(sm *securities.SecurityStore) *TermTraderPlugin {
+func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlugin {
     x := &TermTraderPlugin{
         make(chan securities.MarketDataUpdate),
-        sm,
+        ss,
+        as,
         time.Now().Unix(),
     }
     go x.Run()
@@ -83,8 +86,12 @@ func (x *TermTraderPlugin) DrawWatchlist() {
                 //time.Unix(int64(sec.SessionSettlementDateTime), 0),
             ))
     }
-    rowData = append(rowData, "")
-    rowData = append(rowData, "")
+    rowData = append(rowData, "                                                     ")
+    if x.accountStore.GetCashBalance() > 1 {
+        rowData = append(rowData, fmt.Sprintf("  Cash Balance: %.2f", x.accountStore.GetCashBalance() ) )
+        rowData = append(rowData, fmt.Sprintf(" Net Liquidity: %.2f", x.accountStore.GetNetBalance() ) )
+    }
+    rowData = append(rowData, "                                                     ")
     x.screenWrite(&rowData)
 }
 

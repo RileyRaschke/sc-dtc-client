@@ -8,6 +8,7 @@ import (
     "time"
     "io"
     "bufio"
+    "sync"
     "errors"
     "encoding/binary"
     //"encoding/json"
@@ -22,16 +23,18 @@ import (
     "github.com/RileyR387/sc-dtc-client/dtcproto"
     //"github.com/RileyR387/sc-dtc-client/marketdata"
     "github.com/RileyR387/sc-dtc-client/securities"
+    "github.com/RileyR387/sc-dtc-client/accounts"
     ttr "github.com/RileyR387/sc-dtc-client/termtrader"
 )
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 10
-const CONN_BUFFER_SIZE = 32768
+const CONN_BUFFER_SIZE = 16384
 
 type DtcConnection struct {
     connArgs ConnectArgs
     connUri string
     conn  net.Conn
+    socketReadMutex sync.Mutex
     connected bool
     reconnecting bool
     terminated bool
@@ -44,7 +47,7 @@ type DtcConnection struct {
     marketData chan securities.MarketDataUpdate
     subscribers []*ttr.TermTraderPlugin
     securityStore *securities.SecurityStore
-    accountMap  map[string] *AccountBalance
+    accountStore *accounts.AccountStore
     keepingAlive bool
     listening bool
     loggedOn bool
@@ -100,24 +103,21 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.loggedOn = true
     d.connected = true
 
-    if ! d.reconnecting {
-        d.securityStore = securities.NewSecurityStore()
-        d.accountMap = make(map[string]*AccountBalance)
-
-        d.clientClose = make(chan int)
-        d.listenClose = make(chan int)
-        d.heartbeatUpdate = make(chan *Heartbeat)
-        d.marketData = make(chan securities.MarketDataUpdate)
-        if d.backOffRate < 2 {
-            d.backOffRate = 1
-        }
-        go d._ReceiveHeartbeat()
-        go d._Listen()
-        go d.keepAlive()
-        go d.startSubscriptionRouter()
-        go d.initTrading()
-        d.reconnecting = false
+    d.securityStore = securities.NewSecurityStore()
+    d.accountStore = accounts.NewAccountStore()
+    d.clientClose = make(chan int)
+    d.listenClose = make(chan int)
+    d.heartbeatUpdate = make(chan *Heartbeat)
+    d.marketData = make(chan securities.MarketDataUpdate)
+    if d.backOffRate < 2 {
+        d.backOffRate = 1
     }
+    go d._ReceiveHeartbeat()
+    go d._Listen()
+    go d.keepAlive()
+    go d.startSubscriptionRouter()
+    go d.initTrading()
+    d.reconnecting = false
 
     return nil
 }
@@ -136,6 +136,10 @@ func (d *DtcConnection) initTrading() (error) {
         log.Fatalf("Failed to load account balances with error: %v", err)
     }
     return err
+}
+
+func (d *DtcConnection) _Reconnect() (error){
+    return nil
 }
 
 func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
@@ -169,7 +173,6 @@ func (d *DtcConnection) Disconnect() {
 }
 
 func (d *DtcConnection) closeListener() {
-        d.listening = false
         d.listenClose <-0
 }
 
@@ -194,7 +197,7 @@ func (d *DtcConnection) keepAlive() {
 
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg securities.MarketDataUpdate
-    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(d.securityStore) }
+    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(d.securityStore, d.accountStore) }
 
     for {
         select {
@@ -225,7 +228,7 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
             //log.Tracef("Updated last heartbeat to %v", m.CurrentDateTime)
         default:
             time.Sleep( time.Duration(d.backOffRate) * 400 * time.Millisecond )
-            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*3 {
+            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*4 {
                 log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
                 if d.listening && !d.connArgs.Reconnect {
                     d.Disconnect()
@@ -233,15 +236,22 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
                     if d.loggedOn {
                         d._Logoff()
                     }
+                    if d.listening {
+                        go d.closeListener()
+                        time.Sleep( time.Second )
+                    }
                 }
                 if !d.listening && !d.connArgs.Reconnect {
                     log.Warn("No longer listening, closing hearbeat listening thread")
                     return
                 } else {
+                    log.Warn("Awaiting logoff for reconnect...")
+                    time.Sleep(time.Duration(d.backOffRate * 10) * time.Second)
                     log.Warn("Attempting reconnect...")
                     d.reconnecting = true
                     d.backOffRate = d.backOffRate * 2
                     d.Connect( d.connArgs )
+                    return
                 }
             }
         }
@@ -256,7 +266,7 @@ func (d *DtcConnection) _Logon() error {
         //TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_UNSET,
         TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_LIVE,
         //TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_SIMULATED,
-        HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS+1,
+        HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS,
         ClientName: "go-dtc",
         ProtocolVersion: dtcproto.DTCVersion_value["CURRENT_VERSION"],
     }
@@ -359,7 +369,8 @@ func (d *DtcConnection) _NextMessage() (proto.Message, reflect.Type, int32) {
 }
 
 func (d *DtcConnection) _GetMessage() ([]byte, int32) {
-
+    d.socketReadMutex.Lock()
+    defer d.socketReadMutex.Unlock()
     length, mTypeId := _ParseHeaderBytes(d.reader)
 
     if length == 0  {
