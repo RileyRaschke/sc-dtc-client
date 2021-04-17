@@ -36,9 +36,10 @@ func (d *DtcConnection) LoadAccounts() error {
 /**
 * Should trigger repsonse handled by DtcConnection._Listen() -> _RouteMessage() but seeing no bytes on wire...
 */
-func (d *DtcConnection) AccountBlanaceRefresh() error {
+func (d *DtcConnection) AccountBlanaceRefresh(acctId string) error {
     balReq := dtcproto.AccountBalanceRequest{
         RequestID: d.nextRequestID(),
+        TradeAccount: acctId,
     }
     //describe( balReq.ProtoReflect().Descriptor().FullName() )
 
@@ -72,5 +73,21 @@ func (d *DtcConnection) HistoricalFills(tradeAccount string) error {
     //_, err = d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
     d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["HISTORICAL_ORDER_FILLS_REQUEST"] ))
     //fmt.Println( protojson.Format(&fillHistReq) )
+    return err
+}
+
+func (d *DtcConnection) CurrentPositions(acctId string) error {
+    balReq := dtcproto.CurrentPositionsRequest {
+        RequestID: d.nextRequestID(),
+        TradeAccount: acctId,
+    }
+    //describe( balReq.ProtoReflect().Descriptor().FullName() )
+    msg, err := proto.Marshal( &balReq )
+    if err != nil {
+        log.Errorf("Failed to marshal CURRENT_POSITIONS_REQUEST message: %v\n", err)
+        return errors.New("Failed to marshal CURRENT_POSITIONS_REQUEST, check proto version?")
+    }
+    log.Debug("Sending CURRENT_POSITIONS_REQUEST")
+    d.conn.Write( PackMessage( msg, dtcproto.DTCMessageType_value["CURRENT_POSITIONS_REQUEST"] ))
     return err
 }

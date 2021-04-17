@@ -1,6 +1,7 @@
 package accounts
 
 import (
+    "time"
     "sync"
     log "github.com/sirupsen/logrus"
     "github.com/golang/protobuf/proto"
@@ -12,6 +13,8 @@ import (
 )
 
 type AccountData = *dtcproto.AccountBalanceUpdate
+type Position = *dtcproto.PositionUpdate
+type Order = *dtcproto.OrderUpdate
 
 type Account struct {
     AccountData
@@ -21,10 +24,11 @@ type AccountStore struct {
     acctIds []string
     accounts map[string]Account
     acctUpdateMutex sync.Mutex
+    lastUpdated int64
 }
 
 func NewAccountStore() *AccountStore {
-    return &AccountStore{ []string{}, make(map[string]Account), sync.Mutex{} }
+    return &AccountStore{ []string{}, make(map[string]Account), sync.Mutex{}, time.Now().Unix() }
 }
 
 func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
@@ -34,6 +38,28 @@ func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
 
     switch( dtcproto.DTCMessageType(mTypeId) ){
 
+    case dtcproto.DTCMessageType_ORDER_UPDATE:
+        order := msg.(Order)
+        log.Debugf("Order Update: %v %v %v %v %v %v %v",
+            order.TradeAccount,
+            order.BuySell,
+            order.Symbol,
+            order.OrderStatus,
+            order.AverageFillPrice,
+            order.OrderQuantity,
+            order.FilledQuantity,
+        )
+        return;
+    case dtcproto.DTCMessageType_POSITION_UPDATE:
+        position := msg.(Position)
+        log.Debugf("Position Update: %v %v %v %v %v",
+            position.TradeAccount,
+            position.Quantity,
+            position.Symbol,
+            time.Unix(int64(position.EntryDateTime),0).Format(time.RFC1123),
+            position.AveragePrice,
+        )
+        return;
     case dtcproto.DTCMessageType_ACCOUNT_BALANCE_UPDATE:
         abu := msg.(*dtcproto.AccountBalanceUpdate)
         if _, ok := as.accounts[abu.TradeAccount]; !ok {
@@ -42,8 +68,8 @@ func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
         //as.accounts[abu.TradeAccount] = abu.(Account)
         as.accounts[abu.TradeAccount] = Account{ abu }
         log.Infof("Trade account balance: %.2f", as.accounts[abu.TradeAccount].SecuritiesValue)
+        as.lastUpdated = time.Now().Unix()
         return;
-
     default:
         log.Debugf("(accountstore) - Balance or Order Data Received %v(%v)\n%v",
             dtcproto.DTCMessageType_name[mTypeId],
@@ -53,12 +79,28 @@ func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
     }
 }
 
+func (as *AccountStore) LastUpdated() int64 {
+    as.acctUpdateMutex.Lock()
+    defer as.acctUpdateMutex.Unlock()
+    return as.lastUpdated
+}
+
 func (as *AccountStore) GetNetBalance() float64 {
     as.acctUpdateMutex.Lock()
     defer as.acctUpdateMutex.Unlock()
     var res float64
     for _, id := range as.acctIds {
         res += as.accounts[id].SecuritiesValue
+    }
+    return res
+}
+
+func (as *AccountStore) GetMarginReq() float64 {
+    as.acctUpdateMutex.Lock()
+    defer as.acctUpdateMutex.Unlock()
+    var res float64
+    for _, id := range as.acctIds {
+        res += as.accounts[id].MarginRequirement
     }
     return res
 }

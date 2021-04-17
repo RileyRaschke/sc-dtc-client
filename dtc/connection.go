@@ -28,7 +28,9 @@ import (
 )
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 10
-const CONN_BUFFER_SIZE = 16384
+//const CONN_BUFFER_SIZE = 4096
+//const CONN_BUFFER_SIZE = 4096*2
+const CONN_BUFFER_SIZE = 131072 // 4096*32
 
 type DtcConnection struct {
     connArgs ConnectArgs
@@ -43,12 +45,14 @@ type DtcConnection struct {
     clientClose chan int
     listenClose chan int
     lastHeartbeatResponse int64
+    heartbeatMtx sync.Mutex
     heartbeatUpdate chan *Heartbeat
     marketData chan securities.MarketDataUpdate
     subscribers []*ttr.TermTraderPlugin
     securityStore *securities.SecurityStore
     accountStore *accounts.AccountStore
     keepingAlive bool
+    keepingAliveMtx sync.Mutex
     listening bool
     loggedOn bool
     backOffRate int
@@ -109,6 +113,7 @@ func (d *DtcConnection) Connect( c ConnectArgs ) (error){
     d.listenClose = make(chan int)
     d.heartbeatUpdate = make(chan *Heartbeat)
     d.marketData = make(chan securities.MarketDataUpdate)
+    d.keepingAlive = true
     if d.backOffRate < 2 {
         d.backOffRate = 1
     }
@@ -131,7 +136,7 @@ func (d *DtcConnection) initTrading() (error) {
         log.Fatalf("Failed to load accounts with error: %v", err)
     }
     time.Sleep( 5*time.Second )
-    err = d.AccountBlanaceRefresh()
+    err = d.AccountBlanaceRefresh(os.Getenv("SC_DTC_CLIENT__DEFAULT_TRADE_ACCOUNT"))
     if err != nil {
         log.Fatalf("Failed to load account balances with error: %v", err)
     }
@@ -148,9 +153,12 @@ func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
 }
 
 func (d *DtcConnection) Disconnect() {
+
+    d.keepingAliveMtx.Lock()
     if d.keepingAlive {
         d.clientClose <-0
     }
+    d.keepingAliveMtx.Unlock()
     if d.loggedOn {
         d._Logoff()
     }
@@ -177,10 +185,11 @@ func (d *DtcConnection) closeListener() {
 }
 
 func (d *DtcConnection) keepAlive() {
-    d.keepingAlive = true
     for {
         select {
         case <-d.clientClose:
+            d.keepingAliveMtx.Lock()
+            defer d.keepingAliveMtx.Unlock()
             d.keepingAlive = false
             log.Debugf("Client Heartbeat closed\n")
             return
@@ -202,7 +211,7 @@ func (d *DtcConnection) startSubscriptionRouter(){
     for {
         select {
         case msg = <-d.marketData:
-            //d.lastHeartbeatResponse = time.Now().Unix()
+            //d._UpdateLastHeartBeat()
             d.securityStore.AddData(msg)
             // Distribute Market data to other subscribers
             for _, subscriber := range d.subscribers {
@@ -212,24 +221,39 @@ func (d *DtcConnection) startSubscriptionRouter(){
     }
 }
 
+func (d *DtcConnection) _UpdateLastHeartBeat() {
+    d.heartbeatMtx.Lock()
+    defer d.heartbeatMtx.Unlock()
+    d.lastHeartbeatResponse = time.Now().Unix()
+}
+
+func (d *DtcConnection) _GetLastHeartbeat() int64 {
+    d.heartbeatMtx.Lock()
+    defer d.heartbeatMtx.Unlock()
+    return d.lastHeartbeatResponse
+}
+
 func (d *DtcConnection) _ReceiveHeartbeat() {
     var m *Heartbeat
-    d.lastHeartbeatResponse = time.Now().Unix()
+    d._UpdateLastHeartBeat()
     for {
         select {
         case m = <-d.heartbeatUpdate:
-            if m.CurrentDateTime - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS+5 {
-                log.Warnf("Received late heartbeat, span from last: %v", m.CurrentDateTime-d.lastHeartbeatResponse)
+            lastHb := d._GetLastHeartbeat()
+            if m.CurrentDateTime - lastHb  > DTC_CLIENT_HEARTBEAT_SECONDS+5 {
+                log.Warnf("Received late heartbeat, span from last: %v", m.CurrentDateTime-lastHb)
             } else {
                 //log.Trace("Received sane heartbeat")
             }
-            d.lastHeartbeatResponse = time.Now().Unix()
+            d._UpdateLastHeartBeat()
+            //d.lastHeartbeatResponse = time.Now().Unix()
             //d.lastHeartbeatResponse = m.CurrentDateTime
             //log.Tracef("Updated last heartbeat to %v", m.CurrentDateTime)
         default:
+            lastHb := d._GetLastHeartbeat()
             time.Sleep( time.Duration(d.backOffRate) * 400 * time.Millisecond )
-            if time.Now().Unix() - d.lastHeartbeatResponse > DTC_CLIENT_HEARTBEAT_SECONDS*4 {
-                log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-d.lastHeartbeatResponse)
+            if time.Now().Unix() - lastHb > DTC_CLIENT_HEARTBEAT_SECONDS*3 {
+                log.Warnf("No server heartbeat received in %v seconds", time.Now().Unix()-lastHb)
                 if d.listening && !d.connArgs.Reconnect {
                     d.Disconnect()
                 } else {
@@ -298,7 +322,7 @@ func (d *DtcConnection) _Logon() error {
         log.Fatalf("Logon Failed with result %v and text %v", logonResponse.Result, logonResponse.ResultText)
         return errors.New("Logon Failure")
     }
-    d.lastHeartbeatResponse = time.Now().Unix()
+    d._UpdateLastHeartBeat()
     log.Debugf("Received %v result: %v", dtcproto.DTCMessageType_name[mTypeId], logonResponse.ResultText)
     fmt.Println( protojson.Format(&logonResponse) )
     return nil

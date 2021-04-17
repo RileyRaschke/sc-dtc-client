@@ -2,6 +2,7 @@ package termtrader
 
 import (
     "fmt"
+    "math"
     "strings"
     "github.com/gookit/color"
     "sort"
@@ -18,20 +19,25 @@ import (
     "github.com/RileyR387/sc-dtc-client/accounts"
 )
 
+const REFRESH_RATE_HZ float64 = 59.98
+
 type TermTraderPlugin struct {
     ReceiveData chan securities.MarketDataUpdate
     //lastMsgJson string
     securityStore *securities.SecurityStore
     accountStore *accounts.AccountStore
     startTime int64
+    refreshMicroseconds int
 }
 
 func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlugin {
+    microsecondsFloat := (1.0/REFRESH_RATE_HZ)*1000*1000
     x := &TermTraderPlugin{
         make(chan securities.MarketDataUpdate),
         ss,
         as,
         time.Now().Unix(),
+        int(math.Ceil(microsecondsFloat)),
     }
     go x.Run()
     return x
@@ -47,20 +53,48 @@ func (x *TermTraderPlugin) Run() {
         select {
         //case mktData = <-x.ReceiveData:
         case <-x.ReceiveData:
-            x.DrawWatchlist()
-        //default:
-        //    time.Sleep( (1/60)*time.Second )
+            //x.draw()
+            continue
+        default:
+            time.Sleep( time.Duration(x.refreshMicroseconds) * time.Microsecond)
+            x.draw()
         }
     }
 }
 
-func (x *TermTraderPlugin) DrawWatchlist() {
+func (x *TermTraderPlugin) draw() {
+    rowData := []string{}
+    rowData = append(rowData,
+        fmt.Sprintf("Current Time: %v\tRuntime: %v",
+            time.Now().Format(time.RFC1123),
+            time.Now().Unix()-x.startTime,
+        ),
+    )
+    rowData = append(rowData, blankRow())
+    rowData = append(rowData, (*x.drawWatchlist())...)
+    rowData = append(rowData, (*x.drawAccountInfo())...)
+    rowData = append(rowData, blankRow())
+    x.screenWrite(&rowData)
+}
+
+func (x *TermTraderPlugin) drawAccountInfo() *[]string {
+    rowData := []string{}
+    rowData = append(rowData, blankRow())
+    if x.accountStore.GetCashBalance() > 1 {
+        rowData = append(rowData, fmt.Sprintf("         As of: %v", time.Unix(x.accountStore.LastUpdated(),0).Format(time.RFC1123) ) )
+        rowData = append(rowData, fmt.Sprintf("  Cash Balance: %.2f", x.accountStore.GetCashBalance() ) )
+        rowData = append(rowData, fmt.Sprintf(" Net Liquidity: %.2f", x.accountStore.GetNetBalance() ) )
+        rowData = append(rowData, fmt.Sprintf("    Margin Req: %.2f", x.accountStore.GetMarginReq() ) )
+    }
+    return &rowData
+}
+
+func (x *TermTraderPlugin) drawWatchlist() *[]string {
     syms := x.securityStore.GetSymbols()
     sort.Strings(syms)
-
+    //rowData := make([]string, len(syms)+1)
     rowData := []string{}
-    rowData = append(rowData, fmt.Sprintf("Current Time: %v\tRuntime: %v", time.Now().Format(time.RFC1123), time.Now().Unix()-x.startTime))
-    rowData = append(rowData, "")
+
     rowData = append(rowData,
         fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v",
             "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume",//"OI",
@@ -86,13 +120,11 @@ func (x *TermTraderPlugin) DrawWatchlist() {
                 //time.Unix(int64(sec.SessionSettlementDateTime), 0),
             ))
     }
-    rowData = append(rowData, "                                                     ")
-    if x.accountStore.GetCashBalance() > 1 {
-        rowData = append(rowData, fmt.Sprintf("  Cash Balance: %.2f", x.accountStore.GetCashBalance() ) )
-        rowData = append(rowData, fmt.Sprintf(" Net Liquidity: %.2f", x.accountStore.GetNetBalance() ) )
-    }
-    rowData = append(rowData, "                                                     ")
-    x.screenWrite(&rowData)
+    return &rowData
+}
+
+func blankRow() string {
+    return fmt.Sprintf("%120v", " ")
 }
 
 func ColorizeChangeString(v string) string {
