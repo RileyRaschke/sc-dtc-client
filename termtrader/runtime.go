@@ -22,8 +22,7 @@ import (
 const REFRESH_RATE_HZ float64 = 59.98
 
 type TermTraderPlugin struct {
-    ReceiveData chan securities.MarketDataUpdate
-    //lastMsgJson string
+    stop chan int
     securityStore *securities.SecurityStore
     accountStore *accounts.AccountStore
     startTime int64
@@ -33,7 +32,7 @@ type TermTraderPlugin struct {
 func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlugin {
     microsecondsFloat := (1.0/REFRESH_RATE_HZ)*1000*1000
     x := &TermTraderPlugin{
-        make(chan securities.MarketDataUpdate),
+        make(chan int),
         ss,
         as,
         time.Now().Unix(),
@@ -41,6 +40,9 @@ func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlu
     }
     go x.Run()
     return x
+}
+
+func (x *TermTraderPlugin) ReceiveData( mdu securities.MarketDataUpdate) {
 }
 
 func (x *TermTraderPlugin) Run() {
@@ -51,15 +53,17 @@ func (x *TermTraderPlugin) Run() {
     tm.Clear() // Clear current screen
     for {
         select {
-        //case mktData = <-x.ReceiveData:
-        case <-x.ReceiveData:
-            //x.draw()
-            continue
+        case <-x.stop:
+            break
         default:
             time.Sleep( time.Duration(x.refreshMicroseconds) * time.Microsecond)
             x.draw()
         }
     }
+}
+
+func (x *TermTraderPlugin) Stop() {
+    x.stop <- 1
 }
 
 func (x *TermTraderPlugin) draw() {

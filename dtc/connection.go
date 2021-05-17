@@ -211,11 +211,11 @@ func (d *DtcConnection) startSubscriptionRouter(){
     for {
         select {
         case msg = <-d.marketData:
-            //d._UpdateLastHeartBeat()
+            d._UpdateLastHeartBeat()
             d.securityStore.AddData(msg)
             // Distribute Market data to other subscribers
             for _, subscriber := range d.subscribers {
-                subscriber.ReceiveData <-msg
+                go subscriber.ReceiveData(msg)
             }
         }
     }
