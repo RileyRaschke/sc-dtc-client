@@ -19,7 +19,8 @@ import (
     "github.com/RileyR387/sc-dtc-client/accounts"
 )
 
-const REFRESH_RATE_HZ float64 = 59.98
+const REFRESH_RATE_HZ float64 = 60.0
+//const REFRESH_RATE_HZ float64 = 2.0
 
 type TermTraderPlugin struct {
     stop chan int
@@ -27,6 +28,7 @@ type TermTraderPlugin struct {
     accountStore *accounts.AccountStore
     startTime int64
     refreshMicroseconds int
+    dStart time.Time
 }
 
 func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlugin {
@@ -37,6 +39,7 @@ func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlu
         as,
         time.Now().Unix(),
         int(math.Ceil(microsecondsFloat)),
+        time.Now(),
     }
     go x.Run()
     return x
@@ -56,7 +59,8 @@ func (x *TermTraderPlugin) Run() {
         case <-x.stop:
             break
         default:
-            time.Sleep( time.Duration(x.refreshMicroseconds) * time.Microsecond)
+            time.Sleep( (time.Duration(x.refreshMicroseconds) * time.Microsecond) - time.Since(x.dStart))
+            //time.Sleep( time.Duration(x.refreshMicroseconds) * time.Microsecond)
             x.draw()
         }
     }
@@ -67,6 +71,7 @@ func (x *TermTraderPlugin) Stop() {
 }
 
 func (x *TermTraderPlugin) draw() {
+    x.dStart = time.Now()
     rowData := []string{}
     rowData = append(rowData,
         fmt.Sprintf("Current Time: %v\tRuntime: %v",
@@ -151,5 +156,7 @@ func (x *TermTraderPlugin) screenWrite(screenData *[]string) {
     for _, row := range *screenData {
         tm.Println( row )
     }
+    duration := time.Since(x.dStart)
+    tm.Println( fmt.Sprintf("Drew in: %v          ", fmt.Sprintf("%.1f ms", float64(int64(duration))/1000/1000.0)) )
     tm.Flush() // Call it every time at the end of rendering
 }

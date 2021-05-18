@@ -44,6 +44,12 @@ func main() {
 
     CatchInterupt()
 
+    ScreenServer()
+
+    os.Exit(0)
+}
+
+func ScreenServer(){
     for {
         select {
         case <-quit:
@@ -62,8 +68,6 @@ func main() {
             }
         }
     }
-
-    os.Exit(0)
 }
 
 func CatchInterupt(){
