@@ -2,10 +2,11 @@ package termtrader
 
 import (
     "fmt"
+    //"github.com/gookit/color"
+    "os"
+    "os/exec"
+    "bufio"
     "math"
-    "strings"
-    "github.com/gookit/color"
-    "sort"
     //"strconv"
     //"encoding/json"
     //"sync"
@@ -29,6 +30,8 @@ type TermTraderPlugin struct {
     startTime int64
     refreshMicroseconds int
     dStart time.Time
+    inputBuffer string
+    userInputChan chan rune
 }
 
 func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlugin {
@@ -40,6 +43,8 @@ func New(ss *securities.SecurityStore, as *accounts.AccountStore) *TermTraderPlu
         time.Now().Unix(),
         int(math.Ceil(microsecondsFloat)),
         time.Now(),
+        "",
+        make(chan rune),
     }
     go x.Run()
     return x
@@ -54,109 +59,45 @@ func (x *TermTraderPlugin) Run() {
     //var mktData securities.MarketDataUpdate
 
     tm.Clear() // Clear current screen
+    x.runInputListener()
+    frameCnt := 0
     for {
         select {
         case <-x.stop:
             break
+        case stdin, _ := <-x.userInputChan:
+            x.inputRouter(stdin)
         default:
+            if frameCnt >= int(REFRESH_RATE_HZ) {
+                tm.Clear() // Clear current screen
+                frameCnt = 0
+            }
             time.Sleep( (time.Duration(x.refreshMicroseconds) * time.Microsecond) - time.Since(x.dStart))
-            //time.Sleep( time.Duration(x.refreshMicroseconds) * time.Microsecond)
             x.draw()
+            frameCnt++
         }
     }
+}
+
+func (x *TermTraderPlugin) runInputListener() {
+    //ch := make(chan string)
+    go func(ch chan rune) {
+        // disable input buffering
+        exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+        // do not display entered characters on the screen
+        exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+        reader := bufio.NewReader(os.Stdin)
+        for {
+            char, _, err := reader.ReadRune()
+            if err != nil {
+                log.Errorf("Error reading rune from stdin buffer: {}",err)
+            }
+            ch <- char
+        }
+    }(x.userInputChan)
 }
 
 func (x *TermTraderPlugin) Stop() {
     x.stop <- 1
 }
 
-func (x *TermTraderPlugin) draw() {
-    x.dStart = time.Now()
-    rowData := []string{}
-    rowData = append(rowData,
-        fmt.Sprintf("Current Time: %v\tRuntime: %v",
-            time.Now().Format(time.RFC1123),
-            time.Now().Unix()-x.startTime,
-        ),
-    )
-    rowData = append(rowData, blankRow())
-    rowData = append(rowData, (*x.drawWatchlist())...)
-    rowData = append(rowData, (*x.drawAccountInfo())...)
-    rowData = append(rowData, blankRow())
-    x.screenWrite(&rowData)
-}
-
-func (x *TermTraderPlugin) drawAccountInfo() *[]string {
-    rowData := []string{}
-    rowData = append(rowData, blankRow())
-    if x.accountStore.GetCashBalance() > 1 {
-        rowData = append(rowData, fmt.Sprintf("         As of: %v", time.Unix(x.accountStore.LastUpdated(),0).Format(time.RFC1123) ) )
-        rowData = append(rowData, fmt.Sprintf("  Cash Balance: %.2f", x.accountStore.GetCashBalance() ) )
-        rowData = append(rowData, fmt.Sprintf(" Net Liquidity: %.2f", x.accountStore.GetNetBalance() ) )
-        rowData = append(rowData, fmt.Sprintf("    Margin Req: %.2f", x.accountStore.GetMarginReq() ) )
-    }
-    return &rowData
-}
-
-func (x *TermTraderPlugin) drawWatchlist() *[]string {
-    syms := x.securityStore.GetSymbols()
-    sort.Strings(syms)
-    //rowData := make([]string, len(syms)+1)
-    rowData := []string{}
-
-    rowData = append(rowData,
-        fmt.Sprintf(" %-15v %10v %10v %10v %9v %9v %10v %10v %10v %10v",
-            "Symbol", "Bid", "Ask", "Last", "dChg", "dChg%", "Settle","High","Low","Volume",//"OI",
-        ),
-    )
-    fmtStrColor := " %-24v %10v %10v %18v %18v %18v %10v %10v %10v %10v"
-    for _, symbol := range syms {
-        sec := x.securityStore.GetSecurityBySymbol(symbol)
-        rowData = append(rowData, fmt.Sprintf(fmtStrColor,
-                color.FgYellow.Render(sec.GetSymbol()),
-                sec.BidString(),
-                sec.AskString(),
-                color.Bold.Render(sec.LastString()),
-                ColorizeChangeString( sec.DchgString() ),
-                ColorizeChangeString(
-                    fmt.Sprintf("%.2f%%", ((sec.GetLastPrice()-sec.GetSettlementPrice())/sec.GetSettlementPrice())*100),
-                ),
-                sec.SettlementString(),
-                sec.FormatPrice(sec.GetSessionHighPrice()),
-                sec.FormatPrice(sec.GetSessionLowPrice()),
-                sec.GetSessionVolume(),
-                //sec.OpenInterest,
-                //time.Unix(int64(sec.SessionSettlementDateTime), 0),
-            ))
-    }
-    return &rowData
-}
-
-func blankRow() string {
-    return fmt.Sprintf("%120v", " ")
-}
-
-func ColorizeChangeString(v string) string {
-    if strings.HasPrefix(v,"-") || strings.HasPrefix(v, "'-") {
-        red := color.FgRed.Render
-        return red(v)
-
-    } else {
-        green := color.FgGreen.Render
-        return green(v)
-
-    }
-}
-
-func (x *TermTraderPlugin) screenWrite(screenData *[]string) {
-    //tm.Clear() // Clear current screen - Do Manually to prevent flashing
-    // By moving cursor to top-left position we ensure that console output
-    // will be overwritten each time, instead of adding new.
-    tm.MoveCursor(1, 1)
-    for _, row := range *screenData {
-        tm.Println( row )
-    }
-    duration := time.Since(x.dStart)
-    tm.Println( fmt.Sprintf("Drew in: %v          ", fmt.Sprintf("%.1f ms", float64(int64(duration))/1000/1000.0)) )
-    tm.Flush() // Call it every time at the end of rendering
-}
