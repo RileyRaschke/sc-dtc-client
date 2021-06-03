@@ -18,6 +18,11 @@ type Order = *dtcproto.OrderUpdate
 
 type Account struct {
     AccountData
+    positions []Position
+}
+
+func (a *Account) AddPosition(p Position) {
+
 }
 
 type AccountStore struct {
@@ -40,11 +45,12 @@ func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
 
     case dtcproto.DTCMessageType_ORDER_UPDATE:
         order := msg.(Order)
-        log.Debugf("Order Update: %v %v %v %v %v %v %v",
+        log.Debugf("Order Update: %v %v %v %v %v %v %v %v",
             order.TradeAccount,
             order.BuySell,
             order.Symbol,
             order.OrderStatus,
+            order.Price1,
             order.AverageFillPrice,
             order.OrderQuantity,
             order.FilledQuantity,
@@ -66,7 +72,7 @@ func (as *AccountStore) AddData(msg proto.Message, mTypeId int32) {
             as.acctIds = append(as.acctIds, abu.TradeAccount)
         }
         //as.accounts[abu.TradeAccount] = abu.(Account)
-        as.accounts[abu.TradeAccount] = Account{ abu }
+        as.accounts[abu.TradeAccount] = Account{ abu, []Position{} }
         log.Infof("Trade account balance: %.2f", as.accounts[abu.TradeAccount].SecuritiesValue)
         as.lastUpdated = time.Now().Unix()
         return;

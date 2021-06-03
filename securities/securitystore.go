@@ -23,6 +23,10 @@ type SecurityStore struct {
     symbols []string
 }
 
+var (
+    VISIBLE_SECURTIES = []string{"F.US.EPM21","F.US.YMM21","F.US.TYAU21","USDX","F.US.NQU21","F.US.CLEN21"}
+)
+
 func NewSecurityStore() *SecurityStore {
     return &SecurityStore{ make(map[int32]*Security), sync.Mutex{}, make(map[string]int32), []string{} }
 }
@@ -45,6 +49,12 @@ func (ss *SecurityStore) AddSecurity(sec *Security) {
         return
     }
     ss.symbolToIDMap[symbol] = sec.Definition.RequestID
+    sec.Hide()
+    for _, v := range VISIBLE_SECURTIES {
+        if symbol == v {
+            sec.Show()
+        }
+    }
 
     ss.secMap[sec.Definition.RequestID] = sec
 

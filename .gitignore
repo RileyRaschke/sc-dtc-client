@@ -7,3 +7,4 @@ sc-dtc-client.exe
 sc-dtc-client.exe.yaml
 *.log
 *.err
+data/*

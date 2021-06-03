@@ -39,6 +39,7 @@ type Security struct {
     LastTradeVolume uint32
     LastSide string
     AddingDataMutex sync.Mutex
+    hidden bool
 }
 
 func FromDef(def *dtcproto.SecurityDefinitionResponse) *Security {
@@ -89,3 +90,14 @@ func (s *Security) GetSessionVolume() uint32 {
     defer s.AddingDataMutex.Unlock()
     return s.SessionVolume
 }
+
+func (s *Security) IsHidden() bool {
+    return s.hidden
+}
+func (s *Security) Hide() {
+    s.hidden = true
+}
+func (s *Security) Show() {
+    s.hidden = false
+}
+

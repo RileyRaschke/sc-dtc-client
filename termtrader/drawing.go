@@ -60,6 +60,9 @@ func (x *TermTraderPlugin) drawWatchlist() *[]string {
     fmtStrColor := " %-24v %10v %10v %18v %18v %18v %10v %10v %10v %10v"
     for _, symbol := range syms {
         sec := x.securityStore.GetSecurityBySymbol(symbol)
+        if sec.IsHidden() {
+            continue
+        }
         rowData = append(rowData, fmt.Sprintf(fmtStrColor,
                 color.FgYellow.Render(sec.GetSymbol()),
                 sec.BidString(),
