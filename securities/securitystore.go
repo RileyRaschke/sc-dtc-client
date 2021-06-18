@@ -24,7 +24,7 @@ type SecurityStore struct {
 }
 
 var (
-    VISIBLE_SECURTIES = []string{"F.US.EPM21","F.US.YMM21","F.US.TYAU21","USDX","F.US.NQU21","F.US.CLEN21"}
+    VISIBLE_SECURTIES = []string{"F.US.EPU21","F.US.EPM21","F.US.YMU21","F.US.YMM21","F.US.TYAU21","USDX","F.US.NQU21","F.US.CLEN21"}
 )
 
 func NewSecurityStore() *SecurityStore {
@@ -46,6 +46,7 @@ func (ss *SecurityStore) AddSecurity(sec *Security) {
     symbol := sec.GetSymbol()
     if _, ok := ss.symbolToIDMap[symbol]; ok {
         // Security has been added already.. reconnect caller?
+        log.Info("Known symbol(%v) added to security store when already exists", symbol)
         return
     }
     ss.symbolToIDMap[symbol] = sec.Definition.RequestID

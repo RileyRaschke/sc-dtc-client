@@ -5,6 +5,7 @@ import (
     //"github.com/gookit/color"
     "os"
     "os/exec"
+    "time"
     "bufio"
     "math"
     //"strconv"
@@ -12,7 +13,6 @@ import (
     //"sync"
     log "github.com/sirupsen/logrus"
     tm "github.com/buger/goterm"
-    "time"
     //"github.com/golang/protobuf/proto"
     //"google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoreflect"
@@ -20,8 +20,8 @@ import (
     "github.com/RileyR387/sc-dtc-client/accounts"
 )
 
-const REFRESH_RATE_HZ float64 = 60.0
-//const REFRESH_RATE_HZ float64 = 2.0
+//const REFRESH_RATE_HZ float64 = 60.0
+const REFRESH_RATE_HZ float64 = 3.0
 
 type TermTraderPlugin struct {
     stop chan int

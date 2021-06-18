@@ -7,6 +7,7 @@ import (
     "strconv"
     "github.com/gookit/color"
     tm "github.com/buger/goterm"
+    log "github.com/sirupsen/logrus"
     //"github.com/RileyR387/sc-dtc-client/securities"
     //"github.com/RileyR387/sc-dtc-client/accounts"
 )
@@ -43,6 +44,23 @@ func (x *TermTraderPlugin) drawAccountInfo() *[]string {
         rowData = append(rowData, fmt.Sprintf(" Net Liquidity: %.2f", x.accountStore.GetNetBalance() ) )
         rowData = append(rowData, fmt.Sprintf("    Margin Req: %.2f", x.accountStore.GetMarginReq() ) )
     }
+    positions := x.accountStore.GetPositions()
+    if len(positions) > 0 {
+        rowData = append(rowData, blankRow())
+        rowData = append(rowData, color.Bold.Render(" Positions "))
+        fmtStr := " %-15v %10v %10v %10v"
+        rowData = append(rowData, fmt.Sprintf(fmtStr, "Symbol","Quantity","AvgPrice","Age"))
+        for _, pos := range positions {
+            rowData = append(rowData,
+                fmt.Sprintf(fmtStr,
+                    pos.Symbol,
+                    ColorizeChangeString(fmt.Sprintf("%v",pos.Quantity)),
+                    pos.AveragePrice,
+                    time.Now().Sub(time.Unix(int64(pos.EntryDateTime),0)),
+                ),
+            )
+        }
+    }
     return &rowData
 }
 
@@ -63,6 +81,7 @@ func (x *TermTraderPlugin) drawWatchlist() *[]string {
         if sec.IsHidden() {
             continue
         }
+        log.Infof("Printing: %v",sec.GetSymbol())
         rowData = append(rowData, fmt.Sprintf(fmtStrColor,
                 color.FgYellow.Render(sec.GetSymbol()),
                 sec.BidString(),

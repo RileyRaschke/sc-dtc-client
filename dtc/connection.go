@@ -25,6 +25,7 @@ import (
     "github.com/RileyR387/sc-dtc-client/securities"
     "github.com/RileyR387/sc-dtc-client/accounts"
     ttr "github.com/RileyR387/sc-dtc-client/termtrader"
+    wsp "github.com/RileyR387/sc-dtc-client/web"
 )
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 10
@@ -48,7 +49,7 @@ type DtcConnection struct {
     heartbeatMtx sync.Mutex
     heartbeatUpdate chan *Heartbeat
     marketData chan securities.MarketDataUpdate
-    subscribers []*ttr.TermTraderPlugin
+    subscribers []ClientPlugin
     securityStore *securities.SecurityStore
     accountStore *accounts.AccountStore
     keepingAlive bool
@@ -206,7 +207,10 @@ func (d *DtcConnection) keepAlive() {
 
 func (d *DtcConnection) startSubscriptionRouter(){
     var msg securities.MarketDataUpdate
-    d.subscribers = []*ttr.TermTraderPlugin{ ttr.New(d.securityStore, d.accountStore) }
+    d.subscribers = []ClientPlugin{
+        ttr.New(d.securityStore, d.accountStore),
+        wsp.New(d.securityStore, d.accountStore),
+    }
 
     for {
         select {
