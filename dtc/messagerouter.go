@@ -2,7 +2,7 @@ package dtc
 
 import (
     log "github.com/sirupsen/logrus"
-    //"fmt"
+    "fmt"
     "errors"
     "reflect"
     "google.golang.org/protobuf/proto"
@@ -13,8 +13,19 @@ import (
 )
 
 func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) error {
+    mTypeStr, ok := dtcproto.DTCMessageType_name[mTypeId]
+    if !ok {
+        // TODO: What are these messages of type 155 with no body? They come in two's...
+        //log.Tracef("Unknown message type id: %v", mTypeId)
+        if msg != nil {
+            log.Errorf("Unknown message type has value: %v", protojson.Format(msg.(protoreflect.ProtoMessage)))
+        }
+        return errors.New("Router received unknown message type id: " + fmt.Sprintf("%v",mTypeId))
+    }
     if msg == nil {
-        mTypeStr := dtcproto.DTCMessageType_name[mTypeId]
+        if mTypeStr ==  "" || mTypeStr == "MESSAGE_TYPE_UNSET" {
+            return nil
+        }
         log.Errorf("Received %v with empty body", mTypeStr)
         return errors.New("Router received null message.")
     }

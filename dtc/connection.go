@@ -187,6 +187,7 @@ func (d *DtcConnection) closeListener() {
 }
 
 func (d *DtcConnection) keepAlive() {
+    lastSend := time.Now()
     for {
         select {
         case <-d.clientClose:
@@ -196,11 +197,14 @@ func (d *DtcConnection) keepAlive() {
             log.Debugf("Client Heartbeat closed\n")
             return
         default:
-            time.Sleep( DTC_CLIENT_HEARTBEAT_SECONDS * time.Second )
-            if d.connected {
-                d._SendHeartbeat()
-            } else {
-                d.clientClose <-0
+            time.Sleep( 200 * time.Millisecond )
+            if time.Since(lastSend).Seconds() > DTC_CLIENT_HEARTBEAT_SECONDS {
+                if d.connected {
+                    d._SendHeartbeat()
+                } else {
+                    d.clientClose <-0
+                }
+                lastSend = time.Now()
             }
         }
     }
@@ -385,7 +389,7 @@ func PackMessage(msg []byte, mTypeId int32) ([]byte){
     binary.LittleEndian.PutUint16(header[0:2], uint16(length))
     binary.LittleEndian.PutUint16(header[2:4], uint16(mTypeId))
     message := append(header, msg...)
-    if dtcproto.DTCMessageType_name[mTypeId] != "HEARTBEAT" {
+    if dtcproto.DTCMessageType_name[mTypeId] != "HEARTBEAT" && dtcproto.DTCMessageType_name[mTypeId] != "LOGON_REQUEST" {
         log.Tracef("Packed message with TypeID: %v (%v) with length %v and contents: 0x%x", mTypeId, dtcproto.DTCMessageType_name[mTypeId], length, message)
     }
     return message
@@ -415,7 +419,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
         switch t := err.(type) {
         case *net.OpError:
             if t.Op == "read" {
-                log.Info("Reader closed")
+                log.Trace("Reader closed")
             } else {
                 log.Errorf("Message didn't fill buffer of %d bytes with error: %v\n", length, err)
             }
