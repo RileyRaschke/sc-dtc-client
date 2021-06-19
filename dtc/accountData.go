@@ -4,7 +4,7 @@ import (
     //"fmt"
     "errors"
     log "github.com/sirupsen/logrus"
-    "github.com/golang/protobuf/proto"
+    "google.golang.org/protobuf/proto"
     //"google.golang.org/protobuf/encoding/protojson"
     "github.com/RileyR387/sc-dtc-client/dtcproto"
 )

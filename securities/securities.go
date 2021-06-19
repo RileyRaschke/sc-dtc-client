@@ -7,7 +7,7 @@ import (
     "sync"
     //log "github.com/sirupsen/logrus"
     //"reflect"
-    "github.com/golang/protobuf/proto"
+    "google.golang.org/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoreflect"
     //"google.golang.org/protobuf/encoding/protojson"
     //"github.com/RileyR387/sc-dtc-client/marketdata"
@@ -68,6 +68,9 @@ func (s *Security) GetLastPrice() float64 {
     return s.Last
 }
 func (s *Security) GetSymbol() string {
+    if s == nil {
+        return ""
+    }
     s.AddingDataMutex.Lock()
     defer s.AddingDataMutex.Unlock()
     if s.Definition == nil {
@@ -92,12 +95,19 @@ func (s *Security) GetSessionVolume() uint32 {
 }
 
 func (s *Security) IsHidden() bool {
+    if s == nil {
+        return true
+    }
     return s.hidden
 }
 func (s *Security) Hide() {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
     s.hidden = true
 }
 func (s *Security) Show() {
+    s.AddingDataMutex.Lock()
+    defer s.AddingDataMutex.Unlock()
     s.hidden = false
 }
 

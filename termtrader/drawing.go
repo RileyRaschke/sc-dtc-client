@@ -3,11 +3,10 @@ package termtrader
 import (
     "fmt"
     "time"
-    "sort"
     "strconv"
     "github.com/gookit/color"
     tm "github.com/buger/goterm"
-    log "github.com/sirupsen/logrus"
+    //log "github.com/sirupsen/logrus"
     //"github.com/RileyR387/sc-dtc-client/securities"
     //"github.com/RileyR387/sc-dtc-client/accounts"
 )
@@ -66,7 +65,6 @@ func (x *TermTraderPlugin) drawAccountInfo() *[]string {
 
 func (x *TermTraderPlugin) drawWatchlist() *[]string {
     syms := x.securityStore.GetSymbols()
-    sort.Strings(syms)
     //rowData := make([]string, len(syms)+1)
     rowData := []string{}
 
@@ -81,7 +79,6 @@ func (x *TermTraderPlugin) drawWatchlist() *[]string {
         if sec.IsHidden() {
             continue
         }
-        log.Infof("Printing: %v",sec.GetSymbol())
         rowData = append(rowData, fmt.Sprintf(fmtStrColor,
                 color.FgYellow.Render(sec.GetSymbol()),
                 sec.BidString(),

@@ -13,7 +13,8 @@ import (
     "encoding/binary"
     //"encoding/json"
     "reflect"
-    "github.com/golang/protobuf/proto"
+    protoV1 "github.com/golang/protobuf/proto" // TODO: use the other one! above^
+    "google.golang.org/protobuf/proto"
     //"google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoregistry"
@@ -440,7 +441,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 
 func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message, reflect.Type) {
     var msg proto.Message
-    pbtype := proto.MessageType( "DTC_PB." + strcase.ToCamel( strings.ToLower( dtcproto.DTCMessageType_name[mTypeId] ) ) )
+    pbtype := protoV1.MessageType( "DTC_PB." + strcase.ToCamel( strings.ToLower( dtcproto.DTCMessageType_name[mTypeId] ) ) )
     //if pbtype != nil && err == nil {
     if pbtype != nil {
         msg = reflect.New(pbtype.Elem()).Interface().(proto.Message)

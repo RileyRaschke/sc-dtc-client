@@ -5,13 +5,15 @@ import (
     //"math"
     //"strings"
     "sync"
+    "sort"
     "encoding/json"
     log "github.com/sirupsen/logrus"
-    //"github.com/golang/protobuf/proto"
+    //"google.golang.org/protobuf/proto"
     //"reflect"
-    //"github.com/golang/protobuf/proto"
+    //"google.golang.org/protobuf/proto"
     "google.golang.org/protobuf/reflect/protoreflect"
     "google.golang.org/protobuf/encoding/protojson"
+    //"google.golang.org/protobuf/types/known/structpb"
     //"github.com/RileyR387/sc-dtc-client/marketdata"
     //"github.com/RileyR387/sc-dtc-client/dtcproto"
 )
@@ -46,7 +48,7 @@ func (ss *SecurityStore) AddSecurity(sec *Security) {
     symbol := sec.GetSymbol()
     if _, ok := ss.symbolToIDMap[symbol]; ok {
         // Security has been added already.. reconnect caller?
-        log.Info("Known symbol(%v) added to security store when already exists", symbol)
+        log.Infof("Known symbol(%v) added to security store when already exists", symbol)
         return
     }
     ss.symbolToIDMap[symbol] = sec.Definition.RequestID
@@ -60,6 +62,8 @@ func (ss *SecurityStore) AddSecurity(sec *Security) {
     ss.secMap[sec.Definition.RequestID] = sec
 
     ss.symbols = append(ss.symbols, symbol)
+
+    sort.Strings(ss.symbols)
 }
 
 func (ss *SecurityStore) AddData(secData MarketDataUpdate) {
@@ -67,13 +71,35 @@ func (ss *SecurityStore) AddData(secData MarketDataUpdate) {
     defer ss.secMapMtx.Unlock()
     // TODO: I shouldn't need to go to string before a map right?
     var mktDataI interface{}
-    var lastMsgJson = protojson.Format((secData.Msg).(protoreflect.ProtoMessage))
-    err := json.Unmarshal([]byte(lastMsgJson), &mktDataI)
+    var msgJson = protojson.Format((secData.Msg).(protoreflect.ProtoMessage))
+    err := json.Unmarshal([]byte(msgJson), &mktDataI)
     if err != nil {
         log.Errorf("Failed to unmarshal json data with error: %v", err)
         return
     }
     dmm := mktDataI.(map[string]interface{})
+
+    /*
+    //v, err := structpb.NewValue((secData.Msg).(protoreflect.ProtoMessage))
+    v, err := structpb.NewValue(secData.Msg)
+    if err != nil {
+        log.Errorf("Failed to convert secData to structpb value with error: %v", err)
+        return
+    }
+    m := v.GetStructValue()
+    dmm := m.AsMap()
+    if dmm == nil {
+        d, _ := m.MarshalJSON()
+        log.Debugf("MarketDataUpdate marshalled to a nil interface with json: %v", string(d) )
+        // Market data unavailable?
+        return
+    }
+    if _, ok := dmm["SymbolID"]; !ok {
+        d, _ := m.MarshalJSON()
+        log.Debugf("SecurityStore recieved addData without SymbolID as: %v", string(d))
+        return
+    }
+    */
     var secId = int32( dmm["SymbolID"].(float64) )
     if sec, ok := ss.secMap[secId]; ok {
         sec.AddData(secData)
@@ -83,6 +109,11 @@ func (ss *SecurityStore) AddData(secData MarketDataUpdate) {
 func (ss *SecurityStore) GetSymbols() []string {
     ss.secMapMtx.Lock()
     defer ss.secMapMtx.Unlock()
-    return ss.symbols
+    if len(ss.symbols) == 0 {
+        return []string{}
+    }
+    res := make([]string, len(ss.symbols))
+    copy( res, ss.symbols )
+    return res
 }
 

@@ -7,9 +7,9 @@
     <script src="script.js"></script>
   </head>
   <body>
-      <br/>
-      <a href="/symbols">Symbol List</a>
-      <br/>
-      <pre>{{.Text}}</pre>
+      <a href="/">Home</a><br/>
+      {{range .Symbols}}
+      {{ . }}<br/>
+      {{end}}
   </body>
 </html>

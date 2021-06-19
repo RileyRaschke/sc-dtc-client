@@ -2,7 +2,7 @@ package dtc
 
 import (
     log "github.com/sirupsen/logrus"
-    "github.com/golang/protobuf/proto"
+    "google.golang.org/protobuf/proto"
 )
 
 type DtcClient struct {

@@ -13,7 +13,7 @@ import (
     //"sync"
     log "github.com/sirupsen/logrus"
     tm "github.com/buger/goterm"
-    //"github.com/golang/protobuf/proto"
+    //"google.golang.org/protobuf/proto"
     //"google.golang.org/protobuf/encoding/protojson"
     //"google.golang.org/protobuf/reflect/protoreflect"
     "github.com/RileyR387/sc-dtc-client/securities"
@@ -21,7 +21,7 @@ import (
 )
 
 //const REFRESH_RATE_HZ float64 = 60.0
-const REFRESH_RATE_HZ float64 = 3.0
+const REFRESH_RATE_HZ float64 = 30.0
 
 type TermTraderPlugin struct {
     stop chan int

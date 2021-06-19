@@ -8,3 +8,4 @@ sc-dtc-client.exe.yaml
 *.log
 *.err
 data/*
+run.sh
