@@ -22,6 +22,7 @@ type WebServerPlugin struct {
 	userInputChan       chan rune
 	textCacheMtx        sync.Mutex
 	textView            string
+	mux                 *http.ServeMux
 }
 
 const REFRESH_RATE_HZ float64 = 4.0
@@ -39,6 +40,7 @@ func New(ss *securities.SecurityStore, as *accounts.AccountStore) *WebServerPlug
 		make(chan rune),
 		sync.Mutex{},
 		"",
+		http.NewServeMux(),
 	}
 	x.initWebRouter()
 	go x.Run()
@@ -55,7 +57,7 @@ type View struct {
 func (x *WebServerPlugin) Run() {
 	fmt.Println("Running WebServerPlugin")
 	log.Info(fmt.Sprintf("Running WebServerPlugin"))
-	go http.ListenAndServe(":8081", nil)
+	go http.ListenAndServe(":8081", x.mux)
 
 	//var mktData securities.MarketDataUpdate
 	frameCnt := 0
