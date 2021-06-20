@@ -1,0 +1,6 @@
+{{ template "header.tmpl" . }}
+      <a href="/">Home</a><br/>
+      {{range .Symbols}}
+      {{ . }}<br/>
+      {{end}}
+{{ template "footer.tmpl" . }}
