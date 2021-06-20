@@ -3,7 +3,7 @@
 
 A `go` client implementation for DTC Protocol servers
 
-**Status:** Early Initial Development (~10% complete)
+**Status:** Early Initial Development (~15% complete)
 
 #### Build
 ```
