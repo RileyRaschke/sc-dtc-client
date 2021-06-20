@@ -3,7 +3,7 @@
 MAIN=sc-dtc-client
 
 GO=$(shell which go)
-DISTVER=$(shell git describe --always --dirty)
+DISTVER=$(shell git describe --always --dirty --long --tags)
 PKG=github.com/RileyR387/sc-dtc-client
 
 dist:
