@@ -2,13 +2,14 @@ package web
 
 import (
 	"fmt"
-	"github.com/RileyR387/sc-dtc-client/accounts"
-	"github.com/RileyR387/sc-dtc-client/securities"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/RileyR387/sc-dtc-client/accounts"
+	"github.com/RileyR387/sc-dtc-client/securities"
+	log "github.com/sirupsen/logrus"
 )
 
 type WebServerPlugin struct {
@@ -57,7 +58,7 @@ type View struct {
 func (x *WebServerPlugin) Run() {
 	fmt.Println("Running WebServerPlugin")
 	log.Info(fmt.Sprintf("Running WebServerPlugin"))
-	go http.ListenAndServe(":8081", x.mux)
+	go x.listen()
 
 	//var mktData securities.MarketDataUpdate
 	frameCnt := 0
@@ -75,6 +76,12 @@ func (x *WebServerPlugin) Run() {
 			x.cacheText()
 			frameCnt++
 		}
+	}
+}
+func (x *WebServerPlugin) listen() {
+	err := http.ListenAndServe(":8081", x.mux)
+	if err != nil {
+		panic(err)
 	}
 }
 func (x *WebServerPlugin) Stop() {

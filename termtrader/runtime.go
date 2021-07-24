@@ -8,11 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
 	//"strconv"
 	//"encoding/json"
 	//"sync"
 	tm "github.com/buger/goterm"
 	log "github.com/sirupsen/logrus"
+
 	//"google.golang.org/protobuf/proto"
 	//"google.golang.org/protobuf/encoding/protojson"
 	//"google.golang.org/protobuf/reflect/protoreflect"
@@ -90,7 +92,7 @@ func (x *TermTraderPlugin) runInputListener() {
 		for {
 			char, _, err := reader.ReadRune()
 			if err != nil {
-				log.Errorf("Error reading rune from stdin buffer: {}", err)
+				log.Errorf("Error reading rune from stdin buffer: %v", err)
 			}
 			ch <- char
 		}

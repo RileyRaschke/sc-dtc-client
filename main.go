@@ -87,7 +87,7 @@ func usage(msg ...string) {
 	b := &strings.Builder{}
 	getopt.PrintUsage(b)
 	u := strings.SplitAfterN(b.String(), "\n", 2)
-	fmt.Printf(`Usage: %s
+	fmt.Printf(`Usage: %s [OPTIONS]
 
 OPTIONS
 %s
