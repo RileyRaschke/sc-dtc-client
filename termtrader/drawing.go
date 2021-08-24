@@ -2,10 +2,11 @@ package termtrader
 
 import (
 	"fmt"
-	tm "github.com/buger/goterm"
-	"github.com/gookit/color"
 	"strconv"
 	"time"
+
+	tm "github.com/buger/goterm"
+	"github.com/gookit/color"
 	//log "github.com/sirupsen/logrus"
 	//"github.com/RileyR387/sc-dtc-client/securities"
 	//"github.com/RileyR387/sc-dtc-client/accounts"
@@ -76,9 +77,11 @@ func (x *TermTraderPlugin) drawWatchlist() *[]string {
 	fmtStrColor := " %-24v %10v %10v %18v %18v %18v %10v %10v %10v %10v"
 	for _, symbol := range syms {
 		sec := x.securityStore.GetSecurityBySymbol(symbol)
-		if sec.IsHidden() {
-			continue
-		}
+		/*
+			if sec.IsHidden() {
+				continue
+			}
+		*/
 		rowData = append(rowData, fmt.Sprintf(fmtStrColor,
 			color.FgYellow.Render(sec.GetSymbol()),
 			sec.BidString(),

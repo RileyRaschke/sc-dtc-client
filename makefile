@@ -17,12 +17,15 @@ dist:
 install:
 	$(GO) install -ldflags "-X main.Version=$(DISTVER) -X $(PKG)/web.Version=$(DISTVER) -X $(PKG)/dtc.Version=$(DISTVER)" .
 
-goformat:
-	gofmt -s -w .
-
 dev:
 	$(GO) run -ldflags "-X main.Version=$(DISTVER) -X $(PKG)/web.Version=$(DISTVER) -X $(PKG)/dtc.Version=$(DISTVER)" . 2>>sc-dtc-client.err
 
 race:
 	$(GO) run -ldflags "-X main.Version=$(DISTVER) -X $(PKG)/web.Version=$(DISTVER) -X $(PKG)/dtc.Version=$(DISTVER)" --race . 2>>sc-dtc-client.err
+
+upgrade:
+	$(GO) get -u && $(GO) mod tidy
+
+goformat:
+	gofmt -s -w .
 
