@@ -71,9 +71,9 @@ func (x *WebServerPlugin) drawWatchlist() *[]string {
 	)
 	for _, symbol := range syms {
 		sec := x.securityStore.GetSecurityBySymbol(symbol)
-		//if sec.IsHidden() {
-		//    continue
-		//}
+		if sec.GetSessionVolume() == 0 {
+			continue
+		}
 		rowData = append(rowData, fmt.Sprintf(fmtStr,
 			sec.GetSymbol(),
 			sec.BidString(),
