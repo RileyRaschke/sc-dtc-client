@@ -3,13 +3,14 @@ package dtc
 import (
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/RileyR387/sc-dtc-client/dtcproto"
 	"github.com/RileyR387/sc-dtc-client/securities"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"reflect"
 )
 
 func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) error {
@@ -47,19 +48,13 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	 */
 	case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER:
 		fallthrough
-	case dtcproto.DTCMessageType_SUBMIT_NEW_SINGLE_ORDER_INT:
-		fallthrough
 	case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER:
-		fallthrough
-	case dtcproto.DTCMessageType_SUBMIT_NEW_OCO_ORDER_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_SUBMIT_FLATTEN_POSITION_ORDER:
 		fallthrough
 	case dtcproto.DTCMessageType_CANCEL_ORDER:
 		fallthrough
 	case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER:
-		fallthrough
-	case dtcproto.DTCMessageType_CANCEL_REPLACE_ORDER_INT:
 		fallthrough
 	// Trading related
 	case dtcproto.DTCMessageType_OPEN_ORDERS_REQUEST:
@@ -136,13 +131,9 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT:
 		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT_INT:
-		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_COMPACT:
-		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_LAST_TRADE_SNAPSHOT:
 		fallthrough
@@ -158,27 +149,17 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_NO_TIMESTAMP:
 		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_INT:
-		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN:
-		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH:
 		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH_INT:
-		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW:
-		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_VOLUME:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_OPEN_INTEREST:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT:
-		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_NUM_TRADES:
 		fallthrough
@@ -190,8 +171,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL:
 		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_INT:
-		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_FLOAT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL:
@@ -199,8 +178,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_FLOAT_WITH_MILLISECONDS:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_NO_TIMESTAMP:
-		fallthrough
-	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_MARKET_DATA_FEED_STATUS:
 		fallthrough
@@ -253,10 +230,6 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	case dtcproto.DTCMessageType_HISTORICAL_PRICE_DATA_RECORD_RESPONSE:
 		fallthrough
 	case dtcproto.DTCMessageType_HISTORICAL_PRICE_DATA_TICK_RECORD_RESPONSE:
-		fallthrough
-	case dtcproto.DTCMessageType_HISTORICAL_PRICE_DATA_RECORD_RESPONSE_INT:
-		fallthrough
-	case dtcproto.DTCMessageType_HISTORICAL_PRICE_DATA_TICK_RECORD_RESPONSE_INT:
 		fallthrough
 	case dtcproto.DTCMessageType_HISTORICAL_PRICE_DATA_RESPONSE_TRAILER:
 		fallthrough

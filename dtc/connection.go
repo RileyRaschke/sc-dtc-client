@@ -299,12 +299,9 @@ func (d *DtcConnection) _ReceiveHeartbeat() {
 
 func (d *DtcConnection) _Logon() error {
 	logonRequest := dtcproto.LogonRequest{
-		Username:  d.connArgs.Username,
-		Password:  d.connArgs.Password,
-		Integer_1: 2,
-		//TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_UNSET,
-		TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_LIVE,
-		//TradeMode: dtcproto.TradeModeEnum_TRADE_MODE_SIMULATED,
+		Username:                   d.connArgs.Username,
+		Password:                   d.connArgs.Password,
+		Integer_1:                  2,
 		HeartbeatIntervalInSeconds: DTC_CLIENT_HEARTBEAT_SECONDS,
 		ClientName:                 "go-dtc",
 		ProtocolVersion:            dtcproto.DTCVersion_value["CURRENT_VERSION"],

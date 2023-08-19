@@ -47,9 +47,6 @@ func (s *Security) AddData(md MarketDataUpdate) {
 		s.SessionVolume += uint32(mds.LastTradeVolume)
 
 		return
-	case dtcproto.DTCMessageType_MARKET_DATA_SNAPSHOT_INT:
-		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
-		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE:
 		//log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
 		mdu := md.Msg.(*dtcproto.MarketDataUpdateTrade)
@@ -67,9 +64,6 @@ func (s *Security) AddData(md MarketDataUpdate) {
 		s.SessionVolume += uint32(mdu.Volume)
 		s.LastData = float64(mdu.DateTime)
 		s.LastSide = string(mdu.AtBidOrAsk)
-		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_TRADE_INT:
-		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_LAST_TRADE_SNAPSHOT:
 		mdu := md.Msg.(*dtcproto.MarketDataUpdateLastTradeSnapshot)
@@ -102,13 +96,7 @@ func (s *Security) AddData(md MarketDataUpdate) {
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_NO_TIMESTAMP:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_BID_ASK_INT:
-		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
-		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN:
-		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
-		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_OPEN_INT:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH:
@@ -116,19 +104,9 @@ func (s *Security) AddData(md MarketDataUpdate) {
 		s.SessionHighPrice = mdu.Price
 		s.LastData = float64(mdu.TradingSessionDate)
 		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_HIGH_INT:
-		mdu := md.Msg.(*dtcproto.MarketDataUpdateSessionHigh_Int)
-		s.SessionHighPrice = float64(mdu.Price)
-		s.LastData = float64(mdu.TradingSessionDate)
-		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW:
 		mdu := md.Msg.(*dtcproto.MarketDataUpdateSessionLow)
 		s.SessionLowPrice = mdu.Price
-		s.LastData = float64(mdu.TradingSessionDate)
-		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_LOW_INT:
-		mdu := md.Msg.(*dtcproto.MarketDataUpdateSessionLow_Int)
-		s.SessionLowPrice = float64(mdu.Price)
 		s.LastData = float64(mdu.TradingSessionDate)
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_VOLUME:
@@ -142,10 +120,6 @@ func (s *Security) AddData(md MarketDataUpdate) {
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT:
 		mdu := md.Msg.(*dtcproto.MarketDataUpdateSessionSettlement)
-		s.SettlementPrice = float64(mdu.Price)
-		return
-	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_SETTLEMENT_INT:
-		mdu := md.Msg.(*dtcproto.MarketDataUpdateSessionSettlement_Int)
 		s.SettlementPrice = float64(mdu.Price)
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_UPDATE_SESSION_NUM_TRADES:
@@ -162,16 +136,10 @@ func (s *Security) AddData(md MarketDataUpdate) {
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
 	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL:
-		//log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
-		return
-	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_INT:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
 	case dtcproto.DTCMessageType_MARKET_DEPTH_SNAPSHOT_LEVEL_FLOAT:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
-		return
-	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL:
-		//log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
 		return
 	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_FLOAT_WITH_MILLISECONDS:
 		//log.Trace( protojson.Format((md.Msg).(protoreflect.ProtoMessage)) )
@@ -179,7 +147,7 @@ func (s *Security) AddData(md MarketDataUpdate) {
 	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_NO_TIMESTAMP:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
-	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL_INT:
+	case dtcproto.DTCMessageType_MARKET_DEPTH_UPDATE_LEVEL:
 		log.Trace(protojson.Format((md.Msg).(protoreflect.ProtoMessage)))
 		return
 	case dtcproto.DTCMessageType_MARKET_DATA_FEED_STATUS:
