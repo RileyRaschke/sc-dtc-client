@@ -5,21 +5,25 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"os"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+
 	//"encoding/json"
-	protoV1 "github.com/golang/protobuf/proto" // TODO: use the other one! above^
-	"google.golang.org/protobuf/proto"
 	"reflect"
+
+	"google.golang.org/protobuf/proto" // TODO: use the other one! above^
+
 	//"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/encoding/protojson"
 	//"google.golang.org/protobuf/reflect/protoregistry"
-	"github.com/iancoleman/strcase"
 	"strings"
+
+	"github.com/iancoleman/strcase"
 
 	"github.com/RileyR387/sc-dtc-client/dtcproto"
 	//"github.com/RileyR387/sc-dtc-client/marketdata"
@@ -31,8 +35,8 @@ import (
 
 const DTC_CLIENT_HEARTBEAT_SECONDS = 10
 
-//const CONN_BUFFER_SIZE = 4096
-//const CONN_BUFFER_SIZE = 4096*2
+// const CONN_BUFFER_SIZE = 4096
+// const CONN_BUFFER_SIZE = 4096*2
 const CONN_BUFFER_SIZE = 131072 // 4096*32
 
 type DtcConnection struct {
@@ -447,7 +451,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 
 func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message, reflect.Type) {
 	var msg proto.Message
-	pbtype := protoV1.MessageType("DTC_PB." + strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId])))
+	pbtype := proto.MessageType("DTC_PB." + strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId])))
 	//if pbtype != nil && err == nil {
 	if pbtype != nil {
 		msg = reflect.New(pbtype.Elem()).Interface().(proto.Message)
