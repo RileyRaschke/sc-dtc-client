@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/buger/goterm v1.0.4
-	github.com/golang/protobuf v1.5.3
 	github.com/gookit/color v1.5.4
 	github.com/iancoleman/strcase v0.3.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c

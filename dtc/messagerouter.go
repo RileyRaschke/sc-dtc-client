@@ -2,33 +2,32 @@ package dtc
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 
 	"github.com/RileyR387/sc-dtc-client/dtcproto"
-	"github.com/RileyR387/sc-dtc-client/securities"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	//"google.golang.org/protobuf/reflect/protoreflect"
+	//"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTypeId int32) error {
+func (d *DtcConnection) _RouteMessage(msg []byte, mTypeId int32) error {
 	mTypeStr, ok := dtcproto.DTCMessageType_name[mTypeId]
 	if !ok {
 		// TODO: What are these messages of type 155 with no body? They come in two's...
 		//log.Tracef("Unknown message type id: %v", mTypeId)
-		if msg != nil {
-			log.Errorf("Unknown message type has value: %v", protojson.Format(msg.(protoreflect.ProtoMessage)))
-		}
-		return errors.New("Router received unknown message type id: " + fmt.Sprintf("%v", mTypeId))
+		/*
+			if msg != nil {
+				log.Errorf("Unknown message type has value: %v", protojson.Format(msg))
+			}
+			return errors.New("Router received unknown message type id: " + fmt.Sprintf("%v", mTypeId))
+		*/
 	}
 	if msg == nil {
 		if mTypeStr == "" || mTypeStr == "MESSAGE_TYPE_UNSET" {
 			return nil
 		}
 		log.Errorf("Received %v with empty body", mTypeStr)
-		return errors.New("Router received null message.")
+		return errors.New("router received null message")
 	}
 	switch dtcproto.DTCMessageType(mTypeId) {
 	case dtcproto.DTCMessageType_MESSAGE_TYPE_UNSET:
@@ -41,7 +40,9 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 		return nil // handled at logon
 	case dtcproto.DTCMessageType_HEARTBEAT:
 		//log.Tracef("Received %v(%v)", dtcproto.DTCMessageType_name[mTypeId], mTypeId)
-		d.heartbeatUpdate <- msg.(*Heartbeat)
+		r := &dtcproto.Heartbeat{}
+		proto.Unmarshal(msg, r)
+		d.heartbeatUpdate <- r
 		return nil
 	/**
 	 * Order entry and modification
@@ -99,12 +100,14 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCES_REJECT:
 		fallthrough
 	case dtcproto.DTCMessageType_HISTORICAL_ACCOUNT_BALANCE_RESPONSE:
-		log.Debugf("Balance or Order Data Received %v(%v)\n%v",
-			dtcproto.DTCMessageType_name[mTypeId],
-			mTypeId,
-			protojson.Format(msg.(protoreflect.ProtoMessage)),
-		)
-		go d.accountStore.AddData(msg, mTypeId)
+		/*
+			log.Debugf("Balance or Order Data Received %v(%v)\n%v",
+				dtcproto.DTCMessageType_name[mTypeId],
+				mTypeId,
+				protojson.Format(msg),
+			)
+			go d.accountStore.AddData(msg, mTypeId)
+		*/
 		return nil
 
 	case dtcproto.DTCMessageType_LOGOFF:
@@ -119,7 +122,18 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	case dtcproto.DTCMessageType_ENCODING_RESPONSE:
 		return nil // handled upon request
 	case dtcproto.DTCMessageType_SECURITY_DEFINITION_RESPONSE:
-		d.addSecurity(msg.(*SecurityDefinition))
+		s := &dtcproto.SecurityDefinitionResponse{}
+		/*
+			log.Debugf("Security Definition Response Received %v(%v)\n%v",
+				dtcproto.DTCMessageType_name[mTypeId],
+				mTypeId,
+				protojson.Format(msg),
+			)
+		*/
+		proto.Unmarshal(msg, s)
+		//d.addSecurity(msg.(*SecurityDefinition))
+		//d.addSecurity(*s.(*SecurityDefinition))
+		d.addSecurity(s)
 		return nil
 
 	/**
@@ -184,9 +198,12 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 	case dtcproto.DTCMessageType_MARKET_DATA_FEED_SYMBOL_STATUS:
 		fallthrough
 	case dtcproto.DTCMessageType_TRADING_SYMBOL_STATUS:
+		/** older
 		//d.securityMap[ xx ].AddData( msg, mTypeId )
 		//d.marketData <- &msg
-		d.marketData <- securities.MarketDataUpdate{msg, mTypeId}
+		**/
+		// was in use VVV
+		//d.marketData <- securities.MarketDataUpdate{msg, mTypeId}
 		return nil
 	// Symbol discovery and security definitions
 	case dtcproto.DTCMessageType_EXCHANGE_LIST_REQUEST:
@@ -248,11 +265,13 @@ func (d *DtcConnection) _RouteMessage(msg proto.Message, rtype reflect.Type, mTy
 			log.Error("No message type determined!\n")
 			describe(msg)
 		} else {
-			log.Debugf("Received %v(%v)\n%v",
-				dtcproto.DTCMessageType_name[mTypeId],
-				mTypeId,
-				protojson.Format(msg.(protoreflect.ProtoMessage)),
-			)
+			/*
+				log.Debugf("Received %v(%v)\n%v",
+					dtcproto.DTCMessageType_name[mTypeId],
+					mTypeId,
+					protojson.Format(msg.(protoreflect.ProtoMessage)),
+				)
+			*/
 		}
 	}
 	return nil

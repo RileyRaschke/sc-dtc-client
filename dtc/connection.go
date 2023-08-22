@@ -8,26 +8,20 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
 
-	//"encoding/json"
-	"reflect"
-
-	"google.golang.org/protobuf/proto" // TODO: use the other one! above^
-
-	//"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/encoding/protojson"
-	//"google.golang.org/protobuf/reflect/protoregistry"
-	"strings"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/iancoleman/strcase"
-
-	"github.com/RileyR387/sc-dtc-client/dtcproto"
-	//"github.com/RileyR387/sc-dtc-client/marketdata"
 	"github.com/RileyR387/sc-dtc-client/accounts"
+	"github.com/RileyR387/sc-dtc-client/dtcproto"
 	"github.com/RileyR387/sc-dtc-client/securities"
 	ttr "github.com/RileyR387/sc-dtc-client/termtrader"
 	wsp "github.com/RileyR387/sc-dtc-client/web"
@@ -38,6 +32,8 @@ const DTC_CLIENT_HEARTBEAT_SECONDS = 10
 // const CONN_BUFFER_SIZE = 4096
 // const CONN_BUFFER_SIZE = 4096*2
 const CONN_BUFFER_SIZE = 131072 // 4096*32
+
+//var res protoregistry.MessageTypeResolver = protoregistry.GlobalTypes
 
 type DtcConnection struct {
 	connArgs              ConnectArgs
@@ -149,10 +145,6 @@ func (d *DtcConnection) initTrading() error {
 		log.Fatalf("Failed to load account balances with error: %v", err)
 	}
 	return err
-}
-
-func (d *DtcConnection) _Reconnect() error {
-	return nil
 }
 
 func (d *DtcConnection) addSecurity(def *dtcproto.SecurityDefinitionResponse) {
@@ -398,10 +390,10 @@ func PackMessage(msg []byte, mTypeId int32) []byte {
 	return message
 }
 
-func (d *DtcConnection) _NextMessage() (proto.Message, reflect.Type, int32) {
+func (d *DtcConnection) _NextMessage() ([]byte, int32) {
 	bytes, mTypeId := d._GetMessage()
-	m, t := d._ParseMessage(bytes, mTypeId)
-	return m, t, mTypeId
+	//m := d._ParseMessage(bytes, mTypeId)
+	return bytes, mTypeId
 }
 
 func (d *DtcConnection) _GetMessage() ([]byte, int32) {
@@ -412,7 +404,7 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 	if length == 0 {
 		log.Warnf("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length)
 	} else if log.GetLevel() == log.TraceLevel {
-		//log.Tracef("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length )
+		log.Tracef("Received %v(%v) with byte length %v", dtcproto.DTCMessageType_name[mTypeId], mTypeId, length)
 	}
 
 	resp := make([]byte, length)
@@ -446,17 +438,34 @@ func (d *DtcConnection) _GetMessage() ([]byte, int32) {
 	return resp, mTypeId
 }
 
-func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) (proto.Message, reflect.Type) {
-	var msg proto.Message
-	pbtype := proto.MessageType("DTC_PB." + strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId])))
-	//if pbtype != nil && err == nil {
-	if pbtype != nil {
-		msg = reflect.New(pbtype.Elem()).Interface().(proto.Message)
-		//msg := reflect.New(pbtype).Interface().(proto.Message)
-		//msg := reflect.New((pbtype.(reflect.Type)).Elem()).Interface().(proto.Message)
-		proto.Unmarshal(bMsg, msg)
+func (d *DtcConnection) _ParseMessage(bMsg []byte, mTypeId int32) proto.Message {
+	//pbtype := proto.MessageType("DTC_PB." + strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId])))
+	//typeName := "DTC_PB." + strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId]))
+	fileDescriptor := dtcproto.File_DTCProtocol_proto
+	//messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(typeName))
+	//typeName := dtcproto.DTCMessageType_name[mTypeId]
+	typeName := strcase.ToCamel(strings.ToLower(dtcproto.DTCMessageType_name[mTypeId]))
+	messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(typeName))
+	//log.Infof("Messages: %v", fileDescriptor.Messages())
+
+	if messageDescriptor == nil {
+		log.Warnf("Unknown message type: %v", typeName)
+		return nil
 	}
-	return msg, pbtype
+
+	//log.Infof("Message type: %v", messageDescriptor.FullName())
+
+	instance := dynamicpb.NewMessage(messageDescriptor)
+
+	// Unmarshal into the instance
+	err := proto.UnmarshalOptions{
+		AllowPartial: true, // Set this based on your needs
+		//Resolver:     res,
+	}.Unmarshal(bMsg, instance)
+	if err != nil {
+		log.Fatal("Unmarshaling error:", err)
+	}
+	return instance
 }
 
 func (d *DtcConnection) nextRequestID() int32 {
