@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//============================================================================
+// ============================================================================
 // DTC protocol version
 type DTCVersion int32
 
@@ -422,7 +422,7 @@ func (DTCMessageType) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{1}
 }
 
-//============================================================================
+// ============================================================================
 type EncodingEnum int32
 
 const (
@@ -478,7 +478,7 @@ func (EncodingEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{2}
 }
 
-//============================================================================
+// ============================================================================
 type LogonStatusEnum int32
 
 const (
@@ -534,7 +534,7 @@ func (LogonStatusEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{3}
 }
 
-//============================================================================
+// ============================================================================
 type MessageSupportedEnum int32
 
 const (
@@ -581,7 +581,7 @@ func (MessageSupportedEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{4}
 }
 
-//============================================================================
+// ============================================================================
 type RequestActionEnum int32
 
 const (
@@ -634,7 +634,7 @@ func (RequestActionEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{5}
 }
 
-//==========================================================================
+// ==========================================================================
 type UnbundledTradeIndicatorEnum int32
 
 const (
@@ -684,7 +684,7 @@ func (UnbundledTradeIndicatorEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{6}
 }
 
-//==========================================================================
+// ==========================================================================
 type TradeConditionEnum int32
 
 const (
@@ -734,7 +734,7 @@ func (TradeConditionEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{7}
 }
 
-//============================================================================
+// ============================================================================
 type OrderStatusEnum int32
 
 const (
@@ -808,7 +808,7 @@ func (OrderStatusEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{8}
 }
 
-//============================================================================
+// ============================================================================
 type OrderUpdateReasonEnum int32
 
 const (
@@ -882,7 +882,7 @@ func (OrderUpdateReasonEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{9}
 }
 
-//============================================================================
+// ============================================================================
 type AtBidOrAskEnum int32
 
 const (
@@ -932,7 +932,7 @@ func (AtBidOrAskEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{10}
 }
 
-//============================================================================
+// ============================================================================
 type AtBidOrAskEnum8 int32
 
 const (
@@ -982,7 +982,7 @@ func (AtBidOrAskEnum8) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{11}
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthUpdateTypeEnum int32
 
 const (
@@ -1032,7 +1032,7 @@ func (MarketDepthUpdateTypeEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{12}
 }
 
-//============================================================================
+// ============================================================================
 type FinalUpdateInBatchEnum int32
 
 const (
@@ -1085,7 +1085,7 @@ func (FinalUpdateInBatchEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{13}
 }
 
-//============================================================================
+// ============================================================================
 type OrderTypeEnum int32
 
 const (
@@ -1147,7 +1147,7 @@ func (OrderTypeEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{14}
 }
 
-//============================================================================
+// ============================================================================
 type TimeInForceEnum int32
 
 const (
@@ -1209,7 +1209,7 @@ func (TimeInForceEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{15}
 }
 
-//============================================================================
+// ============================================================================
 type BuySellEnum int32
 
 const (
@@ -1259,7 +1259,7 @@ func (BuySellEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{16}
 }
 
-//============================================================================
+// ============================================================================
 type OpenCloseTradeEnum int32
 
 const (
@@ -1309,7 +1309,7 @@ func (OpenCloseTradeEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{17}
 }
 
-//============================================================================
+// ============================================================================
 type PartialFillHandlingEnum int32
 
 const (
@@ -1359,7 +1359,7 @@ func (PartialFillHandlingEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{18}
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataFeedStatusEnum int32
 
 const (
@@ -1409,7 +1409,7 @@ func (MarketDataFeedStatusEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{19}
 }
 
-//============================================================================
+// ============================================================================
 type PriceDisplayFormatEnum int32
 
 const (
@@ -1513,7 +1513,7 @@ func (PriceDisplayFormatEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{20}
 }
 
-//============================================================================
+// ============================================================================
 type SecurityTypeEnum int32
 
 const (
@@ -1587,7 +1587,7 @@ func (SecurityTypeEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{21}
 }
 
-//============================================================================
+// ============================================================================
 type PutCallEnum int32
 
 const (
@@ -1637,7 +1637,7 @@ func (PutCallEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{22}
 }
 
-//============================================================================
+// ============================================================================
 type SearchTypeEnum int32
 
 const (
@@ -1687,7 +1687,7 @@ func (SearchTypeEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{23}
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalDataIntervalEnum int32
 
 const (
@@ -1776,7 +1776,7 @@ func (HistoricalDataIntervalEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{24}
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataRejectReasonCodeEnum int32
 
 const (
@@ -1832,7 +1832,7 @@ func (HistoricalPriceDataRejectReasonCodeEnum) EnumDescriptor() ([]byte, []int) 
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{25}
 }
 
-//============================================================================
+// ============================================================================
 type TradingStatusEnum int32
 
 const (
@@ -1888,7 +1888,7 @@ func (TradingStatusEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{26}
 }
 
-//==========================================================================
+// ==========================================================================
 type MessageSetBoundaryEnum int32
 
 const (
@@ -1938,7 +1938,7 @@ func (MessageSetBoundaryEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{27}
 }
 
-//============================================================================
+// ============================================================================
 type TradingIsDisabledEnum int32
 
 const (
@@ -1988,7 +1988,7 @@ func (TradingIsDisabledEnum) EnumDescriptor() ([]byte, []int) {
 	return file_DTCProtocol_proto_rawDescGZIP(), []int{28}
 }
 
-//============================================================================
+// ============================================================================
 type EncodingRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2052,7 +2052,7 @@ func (x *EncodingRequest) GetProtocolType() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type EncodingResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2116,7 +2116,7 @@ func (x *EncodingResponse) GetProtocolType() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type LogonRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2252,7 +2252,7 @@ func (x *LogonRequest) GetMarketDataTransmissionInterval() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type LogonResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2452,7 +2452,7 @@ func (x *LogonResponse) GetMarketDataSupported() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type Logoff struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2508,7 +2508,7 @@ func (x *Logoff) GetDoNotReconnect() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type Heartbeat struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2564,7 +2564,7 @@ func (x *Heartbeat) GetCurrentDateTime() int64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataFeedStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2612,7 +2612,7 @@ func (x *MarketDataFeedStatus) GetStatus() MarketDataFeedStatusEnum {
 	return MarketDataFeedStatusEnum_MARKET_DATA_FEED_STATUS_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataFeedSymbolStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2668,7 +2668,7 @@ func (x *MarketDataFeedSymbolStatus) GetStatus() MarketDataFeedStatusEnum {
 	return MarketDataFeedStatusEnum_MARKET_DATA_FEED_STATUS_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type TradingSymbolStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2724,7 +2724,7 @@ func (x *TradingSymbolStatus) GetStatus() TradingStatusEnum {
 	return TradingStatusEnum_TRADING_STATUS_UNKNOWN
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2804,7 +2804,7 @@ func (x *MarketDataRequest) GetIntervalForSnapshotUpdatesInMilliseconds() uint32
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2884,7 +2884,7 @@ func (x *MarketDepthRequest) GetNumLevels() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2940,7 +2940,7 @@ func (x *MarketDataReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataSnapshot struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3140,7 +3140,7 @@ func (x *MarketDataSnapshot) GetMarketDepthUpdateDateTime() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthSnapshotLevel struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3252,7 +3252,7 @@ func (x *MarketDepthSnapshotLevel) GetNumOrders() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthSnapshotLevelFloat struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3348,7 +3348,7 @@ func (x *MarketDepthSnapshotLevelFloat) GetFinalUpdateInBatch() FinalUpdateInBat
 	return FinalUpdateInBatchEnum_FINAL_UPDATE_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthUpdateLevel struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3460,7 +3460,7 @@ func (x *MarketDepthUpdateLevel) GetLevel() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthUpdateLevelFloatWithMilliseconds struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3572,7 +3572,7 @@ func (x *MarketDepthUpdateLevelFloatWithMilliseconds) GetLevel() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthUpdateLevelNoTimestamp struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3676,7 +3676,7 @@ func (x *MarketDepthUpdateLevelNoTimestamp) GetLevel() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionSettlement struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3740,7 +3740,7 @@ func (x *MarketDataUpdateSessionSettlement) GetDateTime() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionOpen struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3804,7 +3804,7 @@ func (x *MarketDataUpdateSessionOpen) GetTradingSessionDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionNumTrades struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3868,7 +3868,7 @@ func (x *MarketDataUpdateSessionNumTrades) GetTradingSessionDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTradingSessionDate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3924,7 +3924,7 @@ func (x *MarketDataUpdateTradingSessionDate) GetDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDepthReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3980,7 +3980,7 @@ func (x *MarketDepthReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTrade struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4060,7 +4060,7 @@ func (x *MarketDataUpdateTrade) GetDateTime() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTradeCompact struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4140,7 +4140,7 @@ func (x *MarketDataUpdateTradeCompact) GetAtBidOrAsk() AtBidOrAskEnum {
 	return AtBidOrAskEnum_BID_ASK_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateLastTradeSnapshot struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4212,7 +4212,7 @@ func (x *MarketDataUpdateLastTradeSnapshot) GetLastTradeDateTime() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTradeWithUnbundledIndicator struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4308,7 +4308,7 @@ func (x *MarketDataUpdateTradeWithUnbundledIndicator) GetTradeCondition() TradeC
 	return TradeConditionEnum_TRADE_CONDITION_NONE
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTradeWithUnbundledIndicator2 struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4404,7 +4404,7 @@ func (x *MarketDataUpdateTradeWithUnbundledIndicator2) GetTradeCondition() Trade
 	return TradeConditionEnum_TRADE_CONDITION_NONE
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateTradeNoTimestamp struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4492,7 +4492,7 @@ func (x *MarketDataUpdateTradeNoTimestamp) GetTradeCondition() TradeConditionEnu
 	return TradeConditionEnum_TRADE_CONDITION_NONE
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateBidAsk struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4580,7 +4580,7 @@ func (x *MarketDataUpdateBidAsk) GetDateTime() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateBidAsk2 struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4668,7 +4668,7 @@ func (x *MarketDataUpdateBidAsk2) GetDateTime() int64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateBidAskCompact struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4756,7 +4756,7 @@ func (x *MarketDataUpdateBidAskCompact) GetSymbolID() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateBidAskNoTimeStamp struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4836,7 +4836,7 @@ func (x *MarketDataUpdateBidAskNoTimeStamp) GetAskQuantity() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateBidAskFloatWithMicroseconds struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4924,7 +4924,7 @@ func (x *MarketDataUpdateBidAskFloatWithMicroseconds) GetDateTime() uint64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionVolume struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4996,7 +4996,7 @@ func (x *MarketDataUpdateSessionVolume) GetIsFinalSessionVolume() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateOpenInterest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5060,7 +5060,7 @@ func (x *MarketDataUpdateOpenInterest) GetTradingSessionDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionHigh struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5124,7 +5124,7 @@ func (x *MarketDataUpdateSessionHigh) GetTradingSessionDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketDataUpdateSessionLow struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5188,7 +5188,7 @@ func (x *MarketDataUpdateSessionLow) GetTradingSessionDate() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5268,7 +5268,7 @@ func (x *MarketOrdersRequest) GetSendQuantitiesGreaterOrEqualTo() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5324,7 +5324,7 @@ func (x *MarketOrdersReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersAdd struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5412,7 +5412,7 @@ func (x *MarketOrdersAdd) GetDateTime() uint64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersModify struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5524,7 +5524,7 @@ func (x *MarketOrdersModify) GetDateTime() uint64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersRemove struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5612,7 +5612,7 @@ func (x *MarketOrdersRemove) GetSide() BuySellEnum {
 	return BuySellEnum_BUY_SELL_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type MarketOrdersSnapshotMessageBoundary struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5668,7 +5668,7 @@ func (x *MarketOrdersSnapshotMessageBoundary) GetMessageBoundary() MessageSetBou
 	return MessageSetBoundaryEnum_MESSAGE_SET_BOUNDARY_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type SubmitNewSingleOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5860,7 +5860,7 @@ func (x *SubmitNewSingleOrder) GetIntendedPositionQuantity() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type SubmitNewSingleOrderInt struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6028,7 +6028,7 @@ func (x *SubmitNewSingleOrderInt) GetOpenOrClose() OpenCloseTradeEnum {
 	return OpenCloseTradeEnum_TRADE_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type SubmitFlattenPositionOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6116,7 +6116,7 @@ func (x *SubmitFlattenPositionOrder) GetIsAutomatedOrder() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type FlattenPositionsForTradeAccount struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6188,7 +6188,7 @@ func (x *FlattenPositionsForTradeAccount) GetIsAutomatedOrder() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type CancelReplaceOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6332,7 +6332,7 @@ func (x *CancelReplaceOrder) GetPrice2AsString() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type CancelReplaceOrderInt struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6460,7 +6460,7 @@ func (x *CancelReplaceOrderInt) GetUpdatePrice1OffsetToParent() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type CancelOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6524,7 +6524,7 @@ func (x *CancelOrder) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type SubmitNewOCOOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -6804,7 +6804,7 @@ func (x *SubmitNewOCOOrder) GetPrice2_2AsString() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type SubmitNewOCOOrderInt struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7028,7 +7028,7 @@ func (x *SubmitNewOCOOrderInt) GetPartialFillHandling() PartialFillHandlingEnum 
 	return PartialFillHandlingEnum_PARTIAL_FILL_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type OpenOrdersRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7100,7 +7100,7 @@ func (x *OpenOrdersRequest) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalOrderFillsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7180,7 +7180,7 @@ func (x *HistoricalOrderFillsRequest) GetStartDateTime() int64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalOrderFillsReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7236,7 +7236,7 @@ func (x *HistoricalOrderFillsReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type CurrentPositionsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7292,7 +7292,7 @@ func (x *CurrentPositionsRequest) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type CurrentPositionsReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7348,7 +7348,7 @@ func (x *CurrentPositionsReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type OrderUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7676,7 +7676,7 @@ func (x *OrderUpdate) GetUsername() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type OpenOrdersReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7732,7 +7732,7 @@ func (x *OpenOrdersReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalOrderFillResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7940,7 +7940,7 @@ func (x *HistoricalOrderFillResponse) GetSenderSubID() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type PositionUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8124,7 +8124,7 @@ func (x *PositionUpdate) GetMaxPotentialPostionQuantity() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type AddCorrectingOrderFill struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8228,7 +8228,7 @@ func (x *AddCorrectingOrderFill) GetFreeFormText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type CorrectingOrderFillResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8292,7 +8292,7 @@ func (x *CorrectingOrderFillResponse) GetIsError() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type TradeAccountsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8340,7 +8340,7 @@ func (x *TradeAccountsRequest) GetRequestID() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type TradeAccountResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8412,7 +8412,7 @@ func (x *TradeAccountResponse) GetRequestID() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type ExchangeListRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8460,7 +8460,7 @@ func (x *ExchangeListRequest) GetRequestID() int32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type ExchangeListResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8532,7 +8532,7 @@ func (x *ExchangeListResponse) GetDescription() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type SymbolsForExchangeRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8612,7 +8612,7 @@ func (x *SymbolsForExchangeRequest) GetSymbol() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type UnderlyingSymbolsForExchangeRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8676,7 +8676,7 @@ func (x *UnderlyingSymbolsForExchangeRequest) GetSecurityType() SecurityTypeEnum
 	return SecurityTypeEnum_SECURITY_TYPE_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type SymbolsForUnderlyingRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8748,7 +8748,7 @@ func (x *SymbolsForUnderlyingRequest) GetSecurityType() SecurityTypeEnum {
 	return SecurityTypeEnum_SECURITY_TYPE_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type SymbolSearchRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8828,7 +8828,7 @@ func (x *SymbolSearchRequest) GetSearchType() SearchTypeEnum {
 	return SearchTypeEnum_SEARCH_TYPE_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type SecurityDefinitionForSymbolRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8892,7 +8892,7 @@ func (x *SecurityDefinitionForSymbolRequest) GetExchange() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type SecurityDefinitionResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9204,7 +9204,7 @@ func (x *SecurityDefinitionResponse) GetProductIdentifier() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type SecurityDefinitionReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9260,7 +9260,7 @@ func (x *SecurityDefinitionReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9316,7 +9316,7 @@ func (x *AccountBalanceRequest) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9372,7 +9372,7 @@ func (x *AccountBalanceReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9636,7 +9636,7 @@ func (x *AccountBalanceUpdate) GetIntroducingBroker() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceAdjustment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9724,7 +9724,7 @@ func (x *AccountBalanceAdjustment) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceAdjustmentReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9788,7 +9788,7 @@ func (x *AccountBalanceAdjustmentReject) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type AccountBalanceAdjustmentComplete struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9860,7 +9860,7 @@ func (x *AccountBalanceAdjustmentComplete) GetNewBalance() float64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalAccountBalancesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9924,7 +9924,7 @@ func (x *HistoricalAccountBalancesRequest) GetStartDateTime() int64 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalAccountBalancesReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9980,7 +9980,7 @@ func (x *HistoricalAccountBalancesReject) GetRejectText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalAccountBalanceResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10092,7 +10092,7 @@ func (x *HistoricalAccountBalanceResponse) GetTransactionId() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type UserMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10148,7 +10148,7 @@ func (x *UserMessage) GetIsPopupMessage() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type GeneralLogMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10196,7 +10196,7 @@ func (x *GeneralLogMessage) GetMessageText() string {
 	return ""
 }
 
-//==========================================================================
+// ==========================================================================
 type JournalEntryAdd struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10252,7 +10252,7 @@ func (x *JournalEntryAdd) GetDateTime() uint64 {
 	return 0
 }
 
-//==========================================================================
+// ==========================================================================
 type JournalEntriesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10308,7 +10308,7 @@ func (x *JournalEntriesRequest) GetStartDateTime() uint64 {
 	return 0
 }
 
-//==========================================================================
+// ==========================================================================
 type JournalEntriesReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10364,7 +10364,7 @@ func (x *JournalEntriesReject) GetRejectText() string {
 	return ""
 }
 
-//==========================================================================
+// ==========================================================================
 type JournalEntryResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10428,7 +10428,7 @@ func (x *JournalEntryResponse) GetIsFinalResponse() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type AlertMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10484,7 +10484,7 @@ func (x *AlertMessage) GetTradeAccount() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10604,7 +10604,7 @@ func (x *HistoricalPriceDataRequest) GetInteger_1() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataResponseHeader struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10684,7 +10684,7 @@ func (x *HistoricalPriceDataResponseHeader) GetIntToFloatPriceDivisor() float32 
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10756,7 +10756,7 @@ func (x *HistoricalPriceDataReject) GetRetryTimeInSeconds() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataRecordResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10884,7 +10884,7 @@ func (x *HistoricalPriceDataRecordResponse) GetIsFinalRecord() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataTickRecordResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10972,7 +10972,7 @@ func (x *HistoricalPriceDataTickRecordResponse) GetIsFinalRecord() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalPriceDataResponseTrailer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11028,7 +11028,7 @@ func (x *HistoricalPriceDataResponseTrailer) GetFinalRecordLastDateTime() int64 
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalMarketDepthDataRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11124,7 +11124,7 @@ func (x *HistoricalMarketDepthDataRequest) GetInteger_1() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalMarketDepthDataResponseHeader struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11188,7 +11188,7 @@ func (x *HistoricalMarketDepthDataResponseHeader) GetNoRecordsToReturn() uint32 
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalMarketDepthDataReject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11252,7 +11252,7 @@ func (x *HistoricalMarketDepthDataReject) GetRejectReasonCode() HistoricalPriceD
 	return HistoricalPriceDataRejectReasonCodeEnum_HPDR_UNSET
 }
 
-//============================================================================
+// ============================================================================
 type HistoricalMarketDepthDataRecordResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11356,7 +11356,7 @@ func (x *HistoricalMarketDepthDataRecordResponse) GetIsFinalRecord() uint32 {
 	return 0
 }
 
-//============================================================================
+// ============================================================================
 type TradeAccountTradingIsDisabledRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11428,7 +11428,7 @@ func (x *TradeAccountTradingIsDisabledRequest) GetSetDisableTradingForParentAcco
 	return TradingIsDisabledEnum_TRADING_IS_DISABLED_RETURN_CURRENT_VALUE
 }
 
-//============================================================================
+// ============================================================================
 type TradeAccountTradingIsDisabledResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11508,7 +11508,7 @@ func (x *TradeAccountTradingIsDisabledResponse) GetErrorText() string {
 	return ""
 }
 
-//============================================================================
+// ============================================================================
 type TradeAccountDataDuplicate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

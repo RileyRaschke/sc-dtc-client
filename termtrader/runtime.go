@@ -22,7 +22,7 @@ import (
 	"github.com/RileyR387/sc-dtc-client/securities"
 )
 
-//const REFRESH_RATE_HZ float64 = 60.0
+// const REFRESH_RATE_HZ float64 = 60.0
 const REFRESH_RATE_HZ float64 = 30.0
 
 type TermTraderPlugin struct {
