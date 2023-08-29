@@ -4,17 +4,12 @@ import (
 	//"fmt"
 	//"math"
 	//"strings"
-	"encoding/json"
+
 	"sort"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-
-	//"google.golang.org/protobuf/proto"
 	//"reflect"
-	//"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	//"google.golang.org/protobuf/types/known/structpb"
 	//"github.com/RileyR387/sc-dtc-client/marketdata"
 	//"github.com/RileyR387/sc-dtc-client/dtcproto"
@@ -62,36 +57,43 @@ func (ss *SecurityStore) AddData(secData MarketDataUpdate) {
 	ss.secMapMtx.Lock()
 	defer ss.secMapMtx.Unlock()
 	// TODO: I shouldn't need to go to string before a map right?
-	var mktDataI interface{}
-	var msgJson = protojson.Format((secData.Msg).(protoreflect.ProtoMessage))
-	err := json.Unmarshal([]byte(msgJson), &mktDataI)
-	if err != nil {
-		log.Errorf("Failed to unmarshal json data with error: %v", err)
-		return
-	}
-	dmm := mktDataI.(map[string]interface{})
+	/*
+		var mktDataI interface{}
+		var msgJson = protojson.Format((secData.Msg).(protoreflect.ProtoMessage))
+		err := json.Unmarshal([]byte(msgJson), &mktDataI)
+		if err != nil {
+			log.Errorf("Failed to unmarshal json data with error: %v", err)
+			return
+		}
+		dmm := mktDataI.(map[string]interface{})
+	*/
 
 	/*
-	   //v, err := structpb.NewValue((secData.Msg).(protoreflect.ProtoMessage))
-	   v, err := structpb.NewValue(secData.Msg)
-	   if err != nil {
-	       log.Errorf("Failed to convert secData to structpb value with error: %v", err)
-	       return
-	   }
-	   m := v.GetStructValue()
-	   dmm := m.AsMap()
-	   if dmm == nil {
-	       d, _ := m.MarshalJSON()
-	       log.Debugf("MarketDataUpdate marshalled to a nil interface with json: %v", string(d) )
-	       // Market data unavailable?
-	       return
-	   }
-	   if _, ok := dmm["SymbolID"]; !ok {
-	       d, _ := m.MarshalJSON()
-	       log.Debugf("SecurityStore recieved addData without SymbolID as: %v", string(d))
-	       return
-	   }
+		msg := proto.Message{}
+		proto.Unmarshal(secData.Msg, &msg)
+		//log.Trace(protojson.Format((msg).(protoreflect.ProtoMessage)))
+
+		//v, err := structpb.NewValue((secData.Msg).(protoreflect.ProtoMessage))
+		v, err := structpb.NewValue(msg)
+		if err != nil {
+			log.Errorf("Failed to convert secData to structpb value with error: %v", err)
+			return
+		}
+		m := v.GetStructValue()
+		dmm := m.AsMap()
+		if dmm == nil {
+			d, _ := m.MarshalJSON()
+			log.Debugf("MarketDataUpdate marshalled to a nil interface with json: %v", string(d))
+			// Market data unavailable?
+			return
+		}
+		if _, ok := dmm["SymbolID"]; !ok {
+			d, _ := m.MarshalJSON()
+			log.Debugf("SecurityStore recieved addData without SymbolID as: %v", string(d))
+			return
+		}
 	*/
+	// FIXME: How to detminer security ID here? Do we shift it down (reverse)?
 	var secId = int32(dmm["SymbolID"].(float64))
 	if sec, ok := ss.secMap[secId]; ok {
 		sec.AddData(secData)

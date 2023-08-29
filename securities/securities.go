@@ -7,7 +7,7 @@ import (
 	"sync"
 	//log "github.com/sirupsen/logrus"
 	//"reflect"
-	"google.golang.org/protobuf/proto"
+
 	//"google.golang.org/protobuf/reflect/protoreflect"
 	//"google.golang.org/protobuf/encoding/protojson"
 	//"github.com/RileyR387/sc-dtc-client/marketdata"
@@ -15,7 +15,7 @@ import (
 )
 
 type MarketDataUpdate struct {
-	Msg    proto.Message
+	Msg    []byte
 	TypeId int32
 }
 

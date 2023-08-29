@@ -1,11 +1,12 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"runtime"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func initLogger(logLevel string, logFile string) {
@@ -14,6 +15,12 @@ func initLogger(logLevel string, logFile string) {
 	level, _ := log.ParseLevel(logLevel)
 
 	log.SetLevel(level)
+	formatter = &log.TextFormatter{
+		FullTimestamp:    true,
+		TimestampFormat:  "2006-01-02 15:04:05.000",
+		PadLevelText:     true,
+		QuoteEmptyFields: true,
+	}
 
 	if logFile != "" {
 		//f, err := os.Create(logFile)
@@ -23,12 +30,15 @@ func initLogger(logLevel string, logFile string) {
 			panic("Failed to create log file: " + logFile)
 		}
 		log.SetOutput(f)
-		formatter = &log.JSONFormatter{
-			TimestampFormat: "2006-01-02 15:04:05.000",
-		}
+		/*
+			formatter = &log.JSONFormatter{
+				TimestampFormat: "2006-01-02 15:04:05.000",
+			}
+		*/
 		if log.GetLevel() == log.TraceLevel {
 			log.SetReportCaller(true)
-			formatter.(*log.JSONFormatter).CallerPrettyfier = LogPrettyTrace
+			//formatter.(*log.JSONFormatter).CallerPrettyfier = LogPrettyTrace
+			formatter.(*log.TextFormatter).CallerPrettyfier = LogPrettyTrace
 		}
 	} else {
 		formatter = &log.TextFormatter{

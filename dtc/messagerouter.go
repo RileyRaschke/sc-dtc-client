@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/RileyR387/sc-dtc-client/dtcproto"
+	"github.com/RileyR387/sc-dtc-client/securities"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	//"google.golang.org/protobuf/reflect/protoreflect"
@@ -203,7 +204,7 @@ func (d *DtcConnection) _RouteMessage(msg []byte, mTypeId int32) error {
 		//d.marketData <- &msg
 		**/
 		// was in use VVV
-		//d.marketData <- securities.MarketDataUpdate{msg, mTypeId}
+		d.marketData <- securities.MarketDataUpdate{msg, mTypeId}
 		return nil
 	// Symbol discovery and security definitions
 	case dtcproto.DTCMessageType_EXCHANGE_LIST_REQUEST:
